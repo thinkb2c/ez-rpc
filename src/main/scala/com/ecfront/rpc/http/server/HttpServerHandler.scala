@@ -1,7 +1,7 @@
 package com.ecfront.rpc.http.server
 
+import com.ecfront.common.ScalaJsonHelper
 import com.ecfront.rpc.http.{HttpResult, Register}
-import com.ecfront.utils.ScalaJsonHelper
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.buffer.Unpooled._
 import io.netty.channel.{Channel, ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}

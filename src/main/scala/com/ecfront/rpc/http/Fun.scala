@@ -1,6 +1,6 @@
 package com.ecfront.rpc.http
 
-import com.ecfront.utils.ScalaJsonHelper
+import com.ecfront.common.ScalaJsonHelper
 import io.netty.handler.codec.http.Cookie
 
 /**

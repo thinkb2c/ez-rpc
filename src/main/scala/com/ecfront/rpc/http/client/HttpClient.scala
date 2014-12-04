@@ -2,8 +2,8 @@ package com.ecfront.rpc.http.client
 
 import java.util.Calendar
 
+import com.ecfront.common.ScalaJsonHelper
 import com.ecfront.rpc.http.HttpResult
-import com.ecfront.utils.ScalaJsonHelper
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.apache.http.client.methods._
 import org.apache.http.client.protocol.HttpClientContext
