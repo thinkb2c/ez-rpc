@@ -33,7 +33,7 @@ class HttpServerHandler extends SimpleChannelInboundHandler[HttpObject] with Laz
         try {
           HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
         } catch {
-          case _ =>
+          case _:Throwable =>
             HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(HttpResult.serverError("服务处理错误")))
         }
       } else {
