@@ -38,15 +38,15 @@ class HttpSpec extends FunSuite {
 
     val client = new HttpClient
 
-    val result1 = client.get[String]("http://127.0.0.1:3000/user/?arg=测试", classOf[String])
+    val result1 = client.get("http://127.0.0.1:3000/user/?arg=测试", classOf[String])
     assert(result1.body == "测试")
-    val result2 = client.post[Person]("http://127.0.0.1:3000/user/", Person("孤岛旭日",Address("HangZhou")), classOf[Person])
+    val result2 = client.post("http://127.0.0.1:3000/user/", Person("孤岛旭日",Address("HangZhou")), classOf[Person])
     assert(result2.body.name == "孤岛旭日")
     assert(result2.body.address.addr == "HangZhou")
-    val result3 = client.put[Person]("http://127.0.0.1:3000/user/a/", Person("sunisle",Address("HangZhou")), classOf[Person])
+    val result3 = client.put("http://127.0.0.1:3000/user/a/", Person("sunisle",Address("HangZhou")), classOf[Person])
     assert(result3.body.name == "sunisle")
     assert(result3.body.address.addr == "modify")
-    val result4 = client.delete[String]("http://127.0.0.1:3000/user/a/", classOf[String])
+    val result4 = client.delete("http://127.0.0.1:3000/user/a/", classOf[String])
     assert(result4.code == "200")
 
     HttpServer.destroy
