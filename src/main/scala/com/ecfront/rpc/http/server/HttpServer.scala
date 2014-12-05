@@ -19,10 +19,10 @@ import io.netty.util.concurrent.DefaultEventExecutorGroup
  */
 object HttpServer extends LazyLogging {
 
-  val bossGroup = new NioEventLoopGroup(1)
-  val workerGroup = new NioEventLoopGroup()
+  private val bossGroup = new NioEventLoopGroup(1)
+  private val workerGroup = new NioEventLoopGroup()
 
-  def startup(port: Int) {
+  def startup(port: Int, host: String = "0.0.0.0") {
     val b = new ServerBootstrap
     b.group(bossGroup, workerGroup)
       .channel(classOf[NioServerSocketChannel])
@@ -38,8 +38,8 @@ object HttpServer extends LazyLogging {
           .addLast(new DefaultEventExecutorGroup(100), new HttpServerHandler)
       }
     })
-    b.bind(port).sync.channel
-    logger.info("Http service startup at:http://127.0.0.1:" + port + "/")
+    b.bind(host, port).sync.channel
+    logger.info("Http service startup at:http://" + host + ":" + port + "/")
   }
 
   def destroy = {

@@ -41,20 +41,20 @@ EZ RPC
        }
      })
 
-     Register.post("/user/", new Fun[Person](classOf[Person]) {
-       override def execute(parameters: Map[String, String], body: Person, cookies: Set[Cookie]): HttpResult[_] = {
-         HttpResult.success[Person](body)
+     Register.post("/user/", new Fun[com.ecfront.rpc.html.Person](classOf[com.ecfront.rpc.html.Person]) {
+       override def execute(parameters: Map[String, String], body: com.ecfront.rpc.html.Person, cookies: Set[Cookie]): HttpResult[_] = {
+         HttpResult.success[com.ecfront.rpc.html.Person](body)
        }
      })
 
      val client = new HttpClient
      val result1 = client.get[String]("http://127.0.0.1:3000/user/?arg=测试", classOf[String])
-     val result2 = client.post[Person]("http://127.0.0.1:3000/user/", Person("孤岛旭日",Address("HangZhou")), classOf[Person])
+     val result2 = client.post[com.ecfront.rpc.html.Person]("http://127.0.0.1:3000/user/", com.ecfront.rpc.html.Person("孤岛旭日",com.ecfront.rpc.html.Address("HangZhou")), classOf[com.ecfront.rpc.html.Person])
 
      HttpServer.destroy
 
-     case class Person(var name: String,var address:Address)
-     case class Address(var addr: String)
+     case class com.ecfront.rpc.html.Person(var name: String,var address:com.ecfront.rpc.html.Address)
+     case class com.ecfront.rpc.html.Address(var addr: String)
 
 =======================================================
 
