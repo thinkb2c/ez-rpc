@@ -28,33 +28,33 @@ EZ RPC
     //初始一个客户端实例
     val client = new HttpClient
     //发起一个请求，返回HttpResult对象，result.code为200表示成功，反之为失败
-    val result = client.<get|post|put|delete>[<返回对象类型>]("<URI>", classOf[<返回对象类型>])
+    val result = client.<get|post|put|delete>("<URI>", classOf[<返回对象类型>])
 
 
 ##示例（更多示例见测试代码）
 
      HttpServer.startup(3000)
 
-     Register.get("/user/", new SimpleFun {
+     Register.get("/user/:id/", new SimpleFun {
        override def execute(parameters: Map[String, String], body: String, cookies: Set[Cookie]): HttpResult[_] = {
          HttpResult.success[String](parameters.get("arg").get)
        }
      })
 
-     Register.post("/user/", new Fun[com.ecfront.rpc.html.Person](classOf[com.ecfront.rpc.html.Person]) {
-       override def execute(parameters: Map[String, String], body: com.ecfront.rpc.html.Person, cookies: Set[Cookie]): HttpResult[_] = {
-         HttpResult.success[com.ecfront.rpc.html.Person](body)
+     Register.post("/user/", new Fun[Person](classOf[Person]) {
+       override def execute(parameters: Map[String, String], body: Person, cookies: Set[Cookie]): HttpResult[_] = {
+         HttpResult.success[Person](body)
        }
      })
 
      val client = new HttpClient
-     val result1 = client.get[String]("http://127.0.0.1:3000/user/?arg=测试", classOf[String])
-     val result2 = client.post[com.ecfront.rpc.html.Person]("http://127.0.0.1:3000/user/", com.ecfront.rpc.html.Person("孤岛旭日",com.ecfront.rpc.html.Address("HangZhou")), classOf[com.ecfront.rpc.html.Person])
+     val result1 = client.get("http://127.0.0.1:3000/user/100/?arg=测试", classOf[String])
+     val result2 = client.post("http://127.0.0.1:3000/user/", Person("孤岛旭日",Address("HangZhou")), classOf[Person])
 
      HttpServer.destroy
 
-     case class com.ecfront.rpc.html.Person(var name: String,var address:com.ecfront.rpc.html.Address)
-     case class com.ecfront.rpc.html.Address(var addr: String)
+     case class Person(var name: String,var address:Address)
+     case class Address(var addr: String)
 
 =======================================================
 
