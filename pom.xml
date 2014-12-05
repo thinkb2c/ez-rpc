@@ -10,7 +10,7 @@
     <description>简单RPC框架</description>
     <url>https://github.com/gudaoxuri/ez-rpc</url>
     <packaging>jar</packaging>
-    <version>0.2</version>
+    <version>0.2.1</version>
 
     <licenses>
         <license>
@@ -60,6 +60,12 @@
             <artifactId>scalatest_2.11</artifactId>
             <version>2.2.1</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
@@ -110,6 +116,7 @@
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
+                                <phase>verify</phase>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>

@@ -5,15 +5,15 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 /**
  * HTTP返回结果的统一数据结果
  * @param code  HTTP 标准码
- * @param result 业务结果
+ * @param body 业务结果
  * @param message 消息，多用于错误说明
  * @tparam E 业务结果的类型
  */
-case class HttpResult[E](val code: String, val result: E, val message: String)
+case class HttpResult[E](val code: String, val body: E, val message: String)
 
 object HttpResult extends LazyLogging {
 
-  def success[E](result: E) = new HttpResult[E](HttpCode.SUCCESS.toString, result, null)
+  def success[E](body: E) = new HttpResult[E](HttpCode.SUCCESS.toString, body, null)
 
   def notFound(message: String) = {
     logger.warn("[Result]Not found:" + message)

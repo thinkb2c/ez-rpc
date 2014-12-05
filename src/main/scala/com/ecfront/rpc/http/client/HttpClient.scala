@@ -23,24 +23,24 @@ class HttpClient extends LazyLogging {
   private val cookieStore = new BasicCookieStore()
   private val httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore).build()
 
-  def get[E](url: String, resultClass: Class[E]): HttpResult[E] = {
-    baseRequest[E](new HttpGet(url), resultClass)
+  def get[E](url: String, bodyClass: Class[E]): HttpResult[E] = {
+    baseRequest[E](new HttpGet(url), bodyClass)
   }
 
-  def delete[E](url: String, resultClass: Class[E]): HttpResult[E] = {
-    baseRequest[E](new HttpDelete(url), resultClass)
+  def delete[E](url: String, bodyClass: Class[E]): HttpResult[E] = {
+    baseRequest[E](new HttpDelete(url), bodyClass)
   }
 
-  def post[E](url: String, data: Any, resultClass: Class[E]): HttpResult[E] = {
+  def post[E](url: String, data: Any, bodyClass: Class[E]): HttpResult[E] = {
     val httpPost = new HttpPost(url)
     attachData(data, httpPost)
-    baseRequest[E](httpPost, resultClass)
+    baseRequest[E](httpPost, bodyClass)
   }
 
-  def put[E](url: String, data: Any, resultClass: Class[E]): HttpResult[E] = {
+  def put[E](url: String, data: Any, bodyClass: Class[E]): HttpResult[E] = {
     val httpPut = new HttpPut(url)
     attachData(data, httpPut)
-    baseRequest[E](httpPut, resultClass)
+    baseRequest[E](httpPut, bodyClass)
   }
 
   def addCookie(key: String, value: String = null, domain: String = null, path: String = null, expiryMinute: Int = 43200) = {
@@ -73,22 +73,22 @@ class HttpClient extends LazyLogging {
     request.setEntity(new StringEntity(ScalaJsonHelper.toJsonString(data), ContentType.APPLICATION_JSON))
   }
 
-  private def baseRequest[E](request: HttpRequestBase, resultClass: Class[E]): HttpResult[E] = {
+  private def baseRequest[E](request: HttpRequestBase, bodyClass: Class[E]): HttpResult[E] = {
     val context = HttpClientContext.create()
     context.setCookieStore(cookieStore)
     val response = httpClient.execute(request, context)
-    returnJson[E](response, resultClass)
+    returnJson[E](response, bodyClass)
   }
 
-  private def returnJson[E](response: CloseableHttpResponse, resultClass: Class[E]): HttpResult[E] = {
+  private def returnJson[E](response: CloseableHttpResponse, bodyClass: Class[E]): HttpResult[E] = {
     val entity = response.getEntity()
     val ret = if (null != entity) EntityUtils.toString(response.getEntity, "UTF-8") else ""
     response.close()
     val json = ScalaJsonHelper.toJson(ret)
     val code = json.path("code").asText()
-    val result = ScalaJsonHelper.toObject[E](ScalaJsonHelper.toJsonString(json.path("result")), resultClass)
-    val message = json.path("result").asText()
-    HttpResult(code, result, message)
+    val body = ScalaJsonHelper.toObject[E](ScalaJsonHelper.toJsonString(json.path("body")), bodyClass)
+    val message = json.path("body").asText()
+    HttpResult(code, body, message)
   }
 }
 
