@@ -42,7 +42,7 @@ object HttpServer extends LazyLogging {
     logger.info("Http service startup at:http://" + host + ":" + port + "/")
   }
 
-  def destroy = {
+  def destroy() = {
     bossGroup.shutdownGracefully()
     workerGroup.shutdownGracefully()
   }

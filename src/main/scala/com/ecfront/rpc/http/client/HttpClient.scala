@@ -81,7 +81,7 @@ class HttpClient extends LazyLogging {
   }
 
   private def returnJson[E](response: CloseableHttpResponse, bodyClass: Class[E]): HttpResult[E] = {
-    val entity = response.getEntity()
+    val entity = response.getEntity
     val ret = if (null != entity) EntityUtils.toString(response.getEntity, "UTF-8") else ""
     response.close()
     val json = ScalaJsonHelper.toJson(ret)

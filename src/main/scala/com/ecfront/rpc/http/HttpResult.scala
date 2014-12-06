@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
  * @param message 消息，多用于错误说明
  * @tparam E 业务结果的类型
  */
-case class HttpResult[E](val code: String, val body: E, val message: String)
+case class HttpResult[E](code: String, body: E, message: String)
 
 object HttpResult extends LazyLogging {
 

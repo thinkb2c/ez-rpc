@@ -66,6 +66,6 @@ class HttpSpec extends FunSuite {
     val result6 = client.get("http://127.0.0.1:3000/user/100/杭州/?arg=测试", classOf[Map[String, String]])
     assert(result6.code == HttpCode.BAD_REQUEST.toString)
 
-    HttpServer.destroy
+    HttpServer.destroy()
   }
 }
