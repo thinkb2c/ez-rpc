@@ -1,4 +1,4 @@
-package com.ecfront.rpc.html
+package com.ecfront.rpc
 
 import java.util.regex.Pattern
 

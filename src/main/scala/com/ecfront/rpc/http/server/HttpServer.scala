@@ -1,49 +1,69 @@
 package com.ecfront.rpc.http.server
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.socket.SocketChannel
-import io.netty.channel.socket.nio.NioServerSocketChannel
+import com.ecfront.rpc.NettyServer
+import io.netty.channel.ChannelPipeline
 import io.netty.handler.codec.http.cors.{CorsConfig, CorsHandler}
 import io.netty.handler.codec.http.{HttpObjectAggregator, HttpRequestDecoder, HttpResponseEncoder}
-import io.netty.handler.logging.{LogLevel, LoggingHandler}
 import io.netty.handler.stream.ChunkedWriteHandler
 import io.netty.util.concurrent.DefaultEventExecutorGroup
 
 /**
- * 启动类，用于Netty服务<br/>
- * 支持标准的基于Json的Restful风格，返回结果为统一的HttpResult对象
- * @see com.ecfront.rpc.http.HttpResult
+ * HTTP服务器，支持标准的基于Json的Restful风格，返回结果为统一的Result对象
  */
-object HttpServer extends LazyLogging {
+class HttpServer extends NettyServer {
 
-  private val bossGroup = new NioEventLoopGroup(1)
-  private val workerGroup = new NioEventLoopGroup()
-
-  def startup(port: Int, host: String = "0.0.0.0") {
-    val b = new ServerBootstrap
-    b.group(bossGroup, workerGroup)
-      .channel(classOf[NioServerSocketChannel])
-      .handler(new LoggingHandler(LogLevel.INFO))
-      .childHandler(new ChannelInitializer[SocketChannel] {
-      override def initChannel(ch: SocketChannel): Unit = {
-        ch.pipeline()
-          .addLast(new HttpRequestDecoder)
-          .addLast(new HttpResponseEncoder)
-          .addLast(new HttpObjectAggregator(65536))
-          .addLast(new ChunkedWriteHandler())
-          .addLast(new CorsHandler(CorsConfig.withAnyOrigin().build()))
-          .addLast(new DefaultEventExecutorGroup(100), new HttpServerHandler)
-      }
-    })
-    b.bind(host, port).sync.channel
-    logger.info("Http service startup at:http://" + host + ":" + port + "/")
+  protected override def addChannelHandler(pipeLine: ChannelPipeline): Unit = {
+    pipeLine
+      .addLast(new HttpRequestDecoder)
+      .addLast(new HttpResponseEncoder)
+      .addLast(new HttpObjectAggregator(65536))
+      .addLast(new ChunkedWriteHandler())
+      .addLast(new CorsHandler(CorsConfig.withAnyOrigin().build()))
+      .addLast(new DefaultEventExecutorGroup(100), new HttpServerHandler)
   }
 
-  def destroy = {
-    bossGroup.shutdownGracefully()
-    workerGroup.shutdownGracefully()
+  /**
+   * 注册POST方法
+   * @param path path
+   * @param function 业务方法
+   * @see com.ecfront.rpc.http.Fun
+   */
+  def post(path: String, function: HttpFun[_]) = {
+    HttpFunctionContainer.add("POST", path, function)
+    this
   }
+
+  /**
+   * 注册PUT方法
+   * @param path path
+   * @param function 业务方法
+   * @see com.ecfront.rpc.http.Fun
+   */
+  def put(path: String, function: HttpFun[_]) = {
+    HttpFunctionContainer.add("PUT", path, function)
+    this
+  }
+
+  /**
+   * 注册DELETE方法
+   * @param path path
+   * @param function 业务方法
+   * @see com.ecfront.rpc.http.SimpleFun
+   */
+  def delete(path: String, function: SimpleHttpFun) = {
+    HttpFunctionContainer.add("DELETE", path, function)
+    this
+  }
+
+  /**
+   * 注册GET方法
+   * @param path path
+   * @param function 业务方法
+   * @see com.ecfront.rpc.http.SimpleFun
+   */
+  def get(path: String, function: SimpleHttpFun) = {
+    HttpFunctionContainer.add("GET", path, function)
+    this
+  }
+
 }

@@ -1,7 +1,8 @@
 package com.ecfront.rpc.http.server
 
 import com.ecfront.common.ScalaJsonHelper
-import com.ecfront.rpc.http.HttpResult
+import com.ecfront.rpc.RPC
+import com.ecfront.rpc.RPC.Result
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.buffer.Unpooled._
 import io.netty.channel.{Channel, ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
@@ -11,14 +12,14 @@ import io.netty.util.CharsetUtil
 
 import scala.collection.JavaConversions._
 
-class HttpServerHandler extends SimpleChannelInboundHandler[HttpObject] with LazyLogging {
+private[rpc] class HttpServerHandler extends SimpleChannelInboundHandler[HttpObject] with LazyLogging {
 
-  def channelRead0(ctx: ChannelHandlerContext, msg: HttpObject): Unit = {
+  override def channelRead0(ctx: ChannelHandlerContext, msg: HttpObject): Unit = {
     msg match {
       case request: HttpRequest =>
         val url = new QueryStringDecoder(request.getUri)
         //根据method及uri查询是否有对应的业务方法
-        val (function, parameters) = FunctionContainer.getFunction(request.getMethod.toString, url.path())
+        val (function, parameters) = HttpFunctionContainer.getFunction(request.getMethod.toString, url.path())
         if (function != null) {
           val cookies = if (request.headers().get(COOKIE) != null) CookieDecoder.decode(request.headers().get(COOKIE)).toSet else Set[Cookie]()
           url.parameters().foreach {
@@ -33,10 +34,10 @@ class HttpServerHandler extends SimpleChannelInboundHandler[HttpObject] with Laz
             HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
           } catch {
             case _: Throwable =>
-              HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(HttpResult.serverError("服务处理错误")))
+              HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误")))
           }
         } else {
-          HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(HttpResult.badRequest("没有对应的业务实现")))
+          HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.badRequest("没有对应的业务实现")))
         }
       case _ =>
     }
@@ -44,11 +45,11 @@ class HttpServerHandler extends SimpleChannelInboundHandler[HttpObject] with Laz
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable): Unit = {
     logger.error("", cause)
-    ctx.channel.close
+    ctx.close
   }
 }
 
-object HttpServerHandler extends LazyLogging {
+private[rpc] object HttpServerHandler extends LazyLogging {
 
   private def responseJson(channel: Channel, req: HttpRequest, json: String): Unit = {
     response(channel, req, json, "application/json; charset=UTF-8")
@@ -68,7 +69,7 @@ object HttpServerHandler extends LazyLogging {
     }
   }
 
-  private def packageJsonResult(result: HttpResult[_]): String = {
+  private def packageJsonResult(result: Result[_]): String = {
     ScalaJsonHelper.toJsonString(result)
   }
 }

@@ -3,27 +3,25 @@ package com.ecfront.rpc.http.server
 
 import java.util.regex.Pattern
 
-import com.ecfront.rpc.http.Fun
-
 import scala.collection.mutable
 
 /**
  * 业务方法容器类
  */
-object FunctionContainer {
+private[rpc] object HttpFunctionContainer {
 
   //业务方法容器，非正则
-  private val funContainer = collection.mutable.Map[String, collection.mutable.Map[String, Fun[_]]]()
-  funContainer += ("POST" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("GET" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("DELETE" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("PUT" -> collection.mutable.Map[String, Fun[_]]())
+  private val funContainer = collection.mutable.Map[String, collection.mutable.Map[String, HttpFun[_]]]()
+  funContainer += ("POST" -> collection.mutable.Map[String, HttpFun[_]]())
+  funContainer += ("GET" -> collection.mutable.Map[String, HttpFun[_]]())
+  funContainer += ("DELETE" -> collection.mutable.Map[String, HttpFun[_]]())
+  funContainer += ("PUT" -> collection.mutable.Map[String, HttpFun[_]]())
   //业务方法容器，正则
-  private val funContainerR = collection.mutable.Map[String, mutable.Buffer[((Pattern, Seq[String]), Fun[_])]]()
-  funContainerR += ("POST" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("GET" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("DELETE" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("PUT" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
+  private val funContainerR = collection.mutable.Map[String, mutable.Buffer[((Pattern, Seq[String]), HttpFun[_])]]()
+  funContainerR += ("POST" -> mutable.Buffer[((Pattern, Seq[String]), HttpFun[_])]())
+  funContainerR += ("GET" -> mutable.Buffer[((Pattern, Seq[String]), HttpFun[_])]())
+  funContainerR += ("DELETE" -> mutable.Buffer[((Pattern, Seq[String]), HttpFun[_])]())
+  funContainerR += ("PUT" -> mutable.Buffer[((Pattern, Seq[String]), HttpFun[_])]())
 
   /**
    * 获取对应的方法，先按非正则匹配，匹配再从正则容器中查找
@@ -31,7 +29,7 @@ object FunctionContainer {
    * @param path path
    * @return
    */
-  private[http] def getFunction(method: String, path: String): (Fun[_], collection.mutable.Map[String, String]) = {
+  private[http] def getFunction(method: String, path: String): (HttpFun[_], collection.mutable.Map[String, String]) = {
     val parameters = collection.mutable.Map[String, String]()
     var res = funContainer.get(method.toUpperCase).get.get(path).orNull
     if (res == null) {
@@ -48,7 +46,7 @@ object FunctionContainer {
   }
 
 
-  private[http] def add(method: String, path: String, function: Fun[_]) {
+  private[http] def add(method: String, path: String, function: HttpFun[_]) {
     if (path.contains(":")) {
       //regular
       funContainerR.get(method).get += ((getRegex(path), function))
