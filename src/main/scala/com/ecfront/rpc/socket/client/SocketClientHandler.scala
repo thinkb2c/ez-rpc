@@ -24,6 +24,8 @@ private[rpc] class SocketClientHandler extends ChannelInboundHandlerAdapter with
       } else {
         ctx.close()
       }
+    } else {
+      ctx.close()
     }
   }
 
