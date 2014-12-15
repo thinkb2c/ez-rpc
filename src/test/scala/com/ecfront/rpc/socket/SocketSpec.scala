@@ -47,11 +47,5 @@ class SocketSpec extends FunSuite {
       }
     }).startup()
 
-    /*    RPC.Client.socket(8181).send("local2ftp").reply(new SocketClientFun(classOf[String]) {
-          override def execute(code: String, person: String, message: String): Any = {
-            assert(code == "200")
-          }
-        }).startup()*/
-
   }
 }
