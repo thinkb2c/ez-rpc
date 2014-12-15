@@ -5,12 +5,10 @@ import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 
 import scala.runtime.BoxedUnit
 
-private[rpc] class SocketServerHandler extends ChannelInboundHandlerAdapter with LazyLogging {
-
-  var processFunction: SocketServerFun[_] = _
+private[rpc] class SocketServerHandler(id: String) extends ChannelInboundHandlerAdapter with LazyLogging {
 
   override def channelRead(ctx: ChannelHandlerContext, msg: scala.Any): Unit = {
-    val result = processFunction.innerExecute(msg)
+    val result = SocketServerFunctionContainer.getFunction(id).innerExecute(msg)
     if (!result.isInstanceOf[BoxedUnit]) {
       ctx.write(result)
     }

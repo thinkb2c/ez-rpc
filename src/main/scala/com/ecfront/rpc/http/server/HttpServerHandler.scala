@@ -18,26 +18,28 @@ private[rpc] class HttpServerHandler extends SimpleChannelInboundHandler[HttpObj
     msg match {
       case request: HttpRequest =>
         val url = new QueryStringDecoder(request.getUri)
-        //根据method及uri查询是否有对应的业务方法
-        val (function, parameters) = HttpFunctionContainer.getFunction(request.getMethod.toString, url.path())
-        if (function != null) {
-          val cookies = if (request.headers().get(COOKIE) != null) CookieDecoder.decode(request.headers().get(COOKIE)).toSet else Set[Cookie]()
-          url.parameters().foreach {
-            item =>
-              parameters += (item._1 -> item._2(0))
+        if (url.uri() != "/favicon.ico") {
+          //根据method及uri查询是否有对应的业务方法
+          val (function, parameters) = HttpFunctionContainer.getFunction(request.getMethod.toString, url.path())
+          if (function != null) {
+            val cookies = if (request.headers().get(COOKIE) != null) CookieDecoder.decode(request.headers().get(COOKIE)).toSet else Set[Cookie]()
+            url.parameters().foreach {
+              item =>
+                parameters += (item._1 -> item._2(0))
+            }
+            var content: String = null
+            if (request.getMethod == HttpMethod.POST || request.getMethod == HttpMethod.PUT) {
+              content = msg.asInstanceOf[HttpContent].content().toString(CharsetUtil.UTF_8)
+            }
+            try {
+              HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
+            } catch {
+              case _: Throwable =>
+                HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误")))
+            }
+          } else {
+            HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.badRequest("没有对应的业务实现")))
           }
-          var content: String = null
-          if (request.getMethod == HttpMethod.POST || request.getMethod == HttpMethod.PUT) {
-            content = msg.asInstanceOf[HttpContent].content().toString(CharsetUtil.UTF_8)
-          }
-          try {
-            HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
-          } catch {
-            case _: Throwable =>
-              HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误")))
-          }
-        } else {
-          HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.badRequest("没有对应的业务实现")))
         }
       case _ =>
     }

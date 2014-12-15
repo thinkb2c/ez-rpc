@@ -9,16 +9,14 @@ import io.netty.handler.codec.serialization.{ClassResolvers, ObjectDecoder, Obje
  */
 class SocketServer extends NettyServer {
 
-  private val socketServerHandler = new SocketServerHandler
-
   protected override def addChannelHandler(pipeLine: ChannelPipeline): Unit = {
     pipeLine.addLast("decoder", new ObjectEncoder())
     pipeLine.addLast("encoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-    pipeLine.addLast(socketServerHandler)
+    pipeLine.addLast(new SocketServerHandler(this.hashCode() + ""))
   }
 
   def process(function: SocketServerFun[_]) = {
-    socketServerHandler.processFunction = function
+    SocketServerFunctionContainer.add(this.hashCode() + "", function)
     this
   }
 }
