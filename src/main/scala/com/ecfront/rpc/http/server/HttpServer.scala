@@ -16,7 +16,7 @@ class HttpServer extends NettyServer {
     pipeLine
       .addLast(new HttpRequestDecoder)
       .addLast(new HttpResponseEncoder)
-      .addLast(new HttpObjectAggregator(65536))
+      .addLast(new HttpObjectAggregator(1048576 * 5)) //5MB
       .addLast(new ChunkedWriteHandler())
       .addLast(new CorsHandler(CorsConfig.withAnyOrigin().build()))
       .addLast(new DefaultEventExecutorGroup(100), new HttpServerHandler)

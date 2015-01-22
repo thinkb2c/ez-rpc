@@ -35,10 +35,10 @@ private[rpc] class HttpServerHandler extends SimpleChannelInboundHandler[HttpObj
               HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
             } catch {
               case _: Throwable =>
-                HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误")))
+                HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误: [ %s ] %s".format(request.getMethod.toString, url.uri()))))
             }
           } else {
-            HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.badRequest("没有对应的业务实现")))
+            HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.badRequest("没有对应的业务实现: [ %s ] %s".format(request.getMethod.toString, url.uri()))))
           }
         }
       case _ =>
