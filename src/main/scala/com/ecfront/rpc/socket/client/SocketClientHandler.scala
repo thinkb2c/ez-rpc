@@ -1,6 +1,6 @@
 package com.ecfront.rpc.socket.client
 
-import com.ecfront.common.ScalaJsonHelper
+import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.RPC.Result
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
@@ -20,7 +20,7 @@ private[rpc] class SocketClientHandler extends ChannelInboundHandlerAdapter with
     if (replyFunction != null) {
       val result = replyFunction.innerExecute(msg.asInstanceOf[Result[_]])
       if (!result.isInstanceOf[BoxedUnit]) {
-        ctx.write(ScalaJsonHelper.toJsonString(result))
+        ctx.write(JsonHelper.toJsonString(result))
       } else {
         ctx.close()
       }

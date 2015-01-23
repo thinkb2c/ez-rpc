@@ -2,7 +2,7 @@ package com.ecfront.rpc.http.client
 
 import java.util.Calendar
 
-import com.ecfront.common.ScalaJsonHelper
+import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.RPC
 import com.ecfront.rpc.RPC.Result
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -16,7 +16,7 @@ import org.apache.http.util.EntityUtils
 /**
  * HTTP 客户端<br/>
  * 支持标准的基于Json的Restful风格，返回结果为统一的HttpResult对象
- *      //TODO 改由Netty实现
+ * //TODO 改由Netty实现
  */
 class HttpClient extends LazyLogging {
 
@@ -70,7 +70,7 @@ class HttpClient extends LazyLogging {
 
 
   private def attachData(data: Any, request: HttpEntityEnclosingRequestBase): Unit = {
-    request.setEntity(new StringEntity(ScalaJsonHelper.toJsonString(data), ContentType.APPLICATION_JSON))
+    request.setEntity(new StringEntity(JsonHelper.toJsonString(data), ContentType.APPLICATION_JSON))
   }
 
   private def baseRequest[E](request: HttpRequestBase, bodyClass: Class[E]): Result[E] = {
@@ -84,9 +84,9 @@ class HttpClient extends LazyLogging {
     val entity = response.getEntity
     val ret = if (null != entity) EntityUtils.toString(response.getEntity, "UTF-8") else ""
     response.close()
-    val json = ScalaJsonHelper.toJson(ret)
+    val json = JsonHelper.toJson(ret)
     val code = json.get(RPC.Result.CODE).asText()
-    val body = ScalaJsonHelper.toObject[E](ScalaJsonHelper.toJsonString(json.get(RPC.Result.BODY)), bodyClass)
+    val body = JsonHelper.toObject[E](JsonHelper.toJsonString(json.get(RPC.Result.BODY)), bodyClass)
     val message = json.get(RPC.Result.MESSAGE).asText()
     Result(code, body, message)
   }

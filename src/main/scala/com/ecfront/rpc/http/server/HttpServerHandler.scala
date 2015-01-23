@@ -1,6 +1,6 @@
 package com.ecfront.rpc.http.server
 
-import com.ecfront.common.ScalaJsonHelper
+import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.RPC
 import com.ecfront.rpc.RPC.Result
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -72,7 +72,7 @@ private[rpc] object HttpServerHandler extends LazyLogging {
   }
 
   private def packageJsonResult(result: Result[_]): String = {
-    ScalaJsonHelper.toJsonString(result)
+    JsonHelper.toJsonString(result)
   }
 }
 

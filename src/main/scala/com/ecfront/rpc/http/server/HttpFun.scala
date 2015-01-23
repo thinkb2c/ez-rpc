@@ -1,6 +1,6 @@
 package com.ecfront.rpc.http.server
 
-import com.ecfront.common.ScalaJsonHelper
+import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.RPC.Result
 import io.netty.handler.codec.http.Cookie
 
@@ -20,7 +20,7 @@ abstract class HttpFun[E](bodyClazz: Class[E]) {
    */
   private[http] def innerExecute(parameters: Map[String, String], body: String, cookies: Set[Cookie]): Result[_] = {
     if (null != body) {
-      execute(parameters, ScalaJsonHelper.toObject[E](body, bodyClazz), cookies)
+      execute(parameters, JsonHelper.toObject[E](body, bodyClazz), cookies)
     } else {
       execute(parameters, null.asInstanceOf[E], cookies)
     }
