@@ -34,7 +34,8 @@ private[rpc] class HttpServerHandler extends SimpleChannelInboundHandler[HttpObj
             try {
               HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(function.innerExecute(parameters.toMap, content, cookies)))
             } catch {
-              case _: Throwable =>
+              case e: Throwable =>
+                logger.error("服务处理错误: [ %s ] %s".format(request.getMethod.toString, url.uri()), e)
                 HttpServerHandler.responseJson(ctx.channel, request, HttpServerHandler.packageJsonResult(RPC.Result.serverError("服务处理错误: [ %s ] %s".format(request.getMethod.toString, url.uri()))))
             }
           } else {
