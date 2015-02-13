@@ -20,7 +20,7 @@ class HttpServer extends LazyLogging {
 
   private[rpc] def startup(port: Int, host: String, baseUploadPath: String) = {
     logger.info("Web Service starting")
-    HttpProcessor.init(vertx, baseUploadPath)
+    HttpExecutor.init(vertx, baseUploadPath)
     vertx.createHttpServer(new HttpServerOptions().setHost(host).setPort(port).setCompressionSupported(true))
       .requestHandler(new Handler[HttpServerRequest] {
       override def handle(event: HttpServerRequest): Unit = {
@@ -39,7 +39,7 @@ class HttpServer extends LazyLogging {
    */
   def get(uri: String, fun: => (MultiMap, Set[Cookie]) => Result[Any]) {
     logger.info("Add method [GET] url :" + uri)
-    router.route(HttpMethod.GET, uri).handler(HttpProcessor.normalProcess(HttpMethod.GET, uri, fun))
+    router.route(HttpMethod.GET, uri).handler(HttpExecutor.normalProcess(HttpMethod.GET, uri, fun))
   }
 
   /**
@@ -50,7 +50,7 @@ class HttpServer extends LazyLogging {
    */
   def delete(uri: String, fun: => (MultiMap, Set[Cookie]) => Result[Any]) {
     logger.info("Add method [DELETE] url :" + uri)
-    router.route(HttpMethod.DELETE, uri).handler(HttpProcessor.normalProcess(HttpMethod.DELETE, uri, fun))
+    router.route(HttpMethod.DELETE, uri).handler(HttpExecutor.normalProcess(HttpMethod.DELETE, uri, fun))
   }
 
   /**
@@ -61,7 +61,7 @@ class HttpServer extends LazyLogging {
    */
   def post[E](uri: String, requestClass: Class[E], fun: => (MultiMap, E, Set[Cookie]) => Result[Any]) {
     logger.info("Add method [POST] url :" + uri)
-    router.route(HttpMethod.POST, uri).handler(HttpProcessor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
+    router.route(HttpMethod.POST, uri).handler(HttpExecutor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
   }
 
 
@@ -73,7 +73,7 @@ class HttpServer extends LazyLogging {
    */
   def put[E](uri: String, requestClass: Class[E], fun: => (MultiMap, E, Set[Cookie]) => Result[Any]) {
     logger.info("Add method [PUT] url :" + uri)
-    router.route(HttpMethod.PUT, uri).handler(HttpProcessor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
+    router.route(HttpMethod.PUT, uri).handler(HttpExecutor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
   }
 
   /**
@@ -96,7 +96,7 @@ class HttpServer extends LazyLogging {
    */
   def upload(uri: String, uploadPath: Option[String], allowType: Option[List[String]], fun: => (MultiMap, Set[String], Set[Cookie]) => Result[Any]) {
     logger.info("Add method [UPLOAD] url :" + uri)
-    router.route(HttpMethod.POST, uri).handler(HttpProcessor.uploadProcess(uploadPath, allowType, fun))
+    router.route(HttpMethod.POST, uri).handler(HttpExecutor.uploadProcess(uploadPath, allowType, fun))
   }
 
 }
