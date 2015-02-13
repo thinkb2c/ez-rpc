@@ -1,69 +1,102 @@
 package com.ecfront.rpc.http.server
 
-import com.ecfront.rpc.NettyServer
-import io.netty.channel.ChannelPipeline
-import io.netty.handler.codec.http.cors.{CorsConfig, CorsHandler}
-import io.netty.handler.codec.http.{HttpObjectAggregator, HttpRequestDecoder, HttpResponseEncoder}
-import io.netty.handler.stream.ChunkedWriteHandler
-import io.netty.util.concurrent.DefaultEventExecutorGroup
+import com.ecfront.rpc.RPC.Result
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import io.vertx.core.http.{HttpMethod, HttpServerOptions, HttpServerRequest}
+import io.vertx.core.{Handler, MultiMap, Vertx}
+import io.vertx.ext.apex.addons.CorsHandler
+import io.vertx.ext.apex.core.{BodyHandler, Cookie, CookieHandler, Router}
 
 /**
  * HTTP服务器，支持标准的基于Json的Restful风格，返回结果为统一的Result对象
  */
-class HttpServer extends NettyServer {
+class HttpServer extends LazyLogging {
 
-  protected override def addChannelHandler(pipeLine: ChannelPipeline): Unit = {
-    pipeLine
-      .addLast(new HttpRequestDecoder)
-      .addLast(new HttpResponseEncoder)
-      .addLast(new HttpObjectAggregator(1048576 * 5)) //5MB
-      .addLast(new ChunkedWriteHandler())
-      .addLast(new CorsHandler(CorsConfig.withAnyOrigin().build()))
-      .addLast(new DefaultEventExecutorGroup(100), new HttpServerHandler)
-  }
+  val vertx = Vertx.vertx()
+  val router = Router.router(vertx)
+  router.route().handler(BodyHandler.bodyHandler())
+  router.route().handler(CookieHandler.cookieHandler())
+  router.route().handler(CorsHandler.cors("*"))
 
-  /**
-   * 注册POST方法
-   * @param path path
-   * @param function 业务方法
-   * @see com.ecfront.rpc.http.Fun
-   */
-  def post(path: String, function: HttpFun[_]) = {
-    HttpFunctionContainer.add("POST", path, function)
+  private[rpc] def startup(port: Int, host: String, baseUploadPath: String) = {
+    logger.info("Web Service starting")
+    HttpProcessor.init(vertx, baseUploadPath)
+    vertx.createHttpServer(new HttpServerOptions().setHost(host).setPort(port).setCompressionSupported(true))
+      .requestHandler(new Handler[HttpServerRequest] {
+      override def handle(event: HttpServerRequest): Unit = {
+        router.accept(event)
+      }
+    }).listen()
+    logger.info("Web Service is running at http://%s:%s".format(host, port))
     this
   }
 
   /**
-   * 注册PUT方法
-   * @param path path
-   * @param function 业务方法
-   * @see com.ecfront.rpc.http.Fun
+   * 注册获取方法
+   *
+   * @param uri         地址
+   * @param fun 处理方法
    */
-  def put(path: String, function: HttpFun[_]) = {
-    HttpFunctionContainer.add("PUT", path, function)
-    this
+  def get(uri: String, fun: => (MultiMap, Set[Cookie]) => Result[Any]) {
+    logger.info("Add method [GET] url :" + uri)
+    router.route(HttpMethod.GET, uri).handler(HttpProcessor.normalProcess(HttpMethod.GET, uri, fun))
   }
 
   /**
-   * 注册DELETE方法
-   * @param path path
-   * @param function 业务方法
-   * @see com.ecfront.rpc.http.SimpleFun
+   * 注册删除方法
+   *
+   * @param uri         地址
+   * @param fun 处理方法
    */
-  def delete(path: String, function: SimpleHttpFun) = {
-    HttpFunctionContainer.add("DELETE", path, function)
-    this
+  def delete(uri: String, fun: => (MultiMap, Set[Cookie]) => Result[Any]) {
+    logger.info("Add method [DELETE] url :" + uri)
+    router.route(HttpMethod.DELETE, uri).handler(HttpProcessor.normalProcess(HttpMethod.DELETE, uri, fun))
   }
 
   /**
-   * 注册GET方法
-   * @param path path
-   * @param function 业务方法
-   * @see com.ecfront.rpc.http.SimpleFun
+   * 注册添加方法
+   *
+   * @param uri         地址
+   * @param fun 处理方法
    */
-  def get(path: String, function: SimpleHttpFun) = {
-    HttpFunctionContainer.add("GET", path, function)
-    this
+  def post[E](uri: String, requestClass: Class[E], fun: => (MultiMap, E, Set[Cookie]) => Result[Any]) {
+    logger.info("Add method [POST] url :" + uri)
+    router.route(HttpMethod.POST, uri).handler(HttpProcessor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
+  }
+
+
+  /**
+   * 注册更新方法
+   *
+   * @param uri         地址
+   * @param fun 处理方法
+   */
+  def put[E](uri: String, requestClass: Class[E], fun: => (MultiMap, E, Set[Cookie]) => Result[Any]) {
+    logger.info("Add method [PUT] url :" + uri)
+    router.route(HttpMethod.PUT, uri).handler(HttpProcessor.submitProcess(HttpMethod.POST, uri, requestClass, fun))
+  }
+
+  /**
+   * 注册上传方法
+   *
+   * @param uri         地址
+   * @param fun 处理方法
+   */
+  def upload(uri: String, fun: => (MultiMap, Set[String], Set[Cookie]) => Result[Any]) {
+    upload(uri, null, null, fun)
+  }
+
+  /**
+   * 注册上传方法
+   *
+   * @param uri         地址
+   * @param allowType   自定义允许的类型列表
+   * @param uploadPath  自定义上传路径
+   * @param fun 处理方法
+   */
+  def upload(uri: String, uploadPath: Option[String], allowType: Option[List[String]], fun: => (MultiMap, Set[String], Set[Cookie]) => Result[Any]) {
+    logger.info("Add method [UPLOAD] url :" + uri)
+    router.route(HttpMethod.POST, uri).handler(HttpProcessor.uploadProcess(uploadPath, allowType, fun))
   }
 
 }

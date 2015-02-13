@@ -2,8 +2,6 @@ package com.ecfront.rpc
 
 import com.ecfront.rpc.http.client.HttpClient
 import com.ecfront.rpc.http.server.HttpServer
-import com.ecfront.rpc.socket.client.SocketClient
-import com.ecfront.rpc.socket.server.SocketServer
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
@@ -22,19 +20,11 @@ object RPC {
      * @param host 主机
      * @return 服务实例
      */
-    def http(port: Int, host: String = "0.0.0.0"): HttpServer = {
-      new HttpServer().startup(port, host).asInstanceOf[HttpServer]
+    def http(port: Int, host: String = "0.0.0.0", baseUploadPath: String = "/tmp/"): HttpServer = {
+      new HttpServer().startup(port, host, baseUploadPath)
     }
 
-    /**
-     * 创建Socket服务
-     * @param port 端口
-     * @param host 主机
-     * @return 服务实例
-     */
-    def socket(port: Int, host: String = "0.0.0.0"): SocketServer = {
-      new SocketServer().startup(port, host).asInstanceOf[SocketServer]
-    }
+
   }
 
   /**
@@ -47,21 +37,10 @@ object RPC {
      * @return  客户端实例
      */
     def http: HttpClient = {
-      HttpClient()
+      new HttpClient()
     }
 
-    /**
-     * 创建Socket客户端实例
-     * @param port 端口
-     * @param host 主机
-     * @return 客户端实例
-     */
-    def socket(port: Int, host: String = "0.0.0.0"): SocketClient = {
-      val client = new SocketClient()
-      client.port = port
-      client.host = host
-      client.asInstanceOf[SocketClient]
-    }
+
   }
 
   /**
@@ -91,6 +70,11 @@ object RPC {
       new Result[String](Code.BAD_REQUEST, null, message)
     }
 
+    def forbidden(message: String) = {
+      logger.warn("[Result]Forbidden:" + message)
+      new Result[String](Code.FORBIDDEN, null, message)
+    }
+
     def unAuthorized(message: String) = {
       logger.warn("[Result]Unauthorized:" + message)
       new Result[String](Code.UNAUTHORIZED, null, message)
@@ -101,6 +85,16 @@ object RPC {
       new Result[String](Code.INTERNAL_SERVER_ERROR, null, message)
     }
 
+    def notImplemented(message: String) = {
+      logger.error("[Result]Not implemented:" + message)
+      new Result[String](Code.NOT_IMPLEMENTED, null, message)
+    }
+
+    def serverUnavailable(message: String) = {
+      logger.error("[Result]Server unavailable:" + message)
+      new Result[String](Code.SERVICE_UNAVAILABLE, null, message)
+    }
+
     /**
      * 结果状态码
      */
@@ -109,8 +103,11 @@ object RPC {
       val SUCCESS = Value("200").toString
       val BAD_REQUEST = Value("400").toString
       val UNAUTHORIZED = Value("401").toString
+      val FORBIDDEN = Value("403").toString
       val NOT_FOUND = Value("404").toString
       val INTERNAL_SERVER_ERROR = Value("500").toString
+      val NOT_IMPLEMENTED = Value("501").toString
+      val SERVICE_UNAVAILABLE = Value("503").toString
     }
 
   }
