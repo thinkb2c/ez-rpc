@@ -9,7 +9,7 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>rpc</artifactId>
-        <version>0.5</version>
+        <version>0.8</version>
     </dependency>
 
 ###HTTP服务
