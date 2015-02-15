@@ -1,30 +1,31 @@
-package com.ecfront.rpc.http
+package com.ecfront.rpc.akka
 
 import java.util.concurrent.CountDownLatch
 
 import com.ecfront.rpc.RPC
 import com.ecfront.rpc.RPC.Result
+import com.ecfront.rpc.akka.server.AkkaRequest
 import org.scalatest.FunSuite
 
 class PerformanceSpec extends FunSuite {
 
-  test("HTTP性能测试") {
+  test("Akka性能测试") {
 
-    val httpServer = RPC.Server.http(3000)
+    val akkaServer = RPC.Server.akka(3000)
 
-    httpServer.put[TestModel]("/index/:id/", classOf[TestModel], {
-      (param, body, cookie) =>
-        assert(param.get("id") == "test")
-        Result.success(body)
+    akkaServer.process({
+      req =>
+        Result.success(req.body)
     })
 
-    val httpClient = RPC.Client.http
+    val akkaClient = RPC.Client.akka(3000)
+
     val latch = new CountDownLatch(10000)
     val start = System.currentTimeMillis()
     for (i <- 0 to 10000) {
       new Thread(new Runnable {
         override def run(): Unit = {
-          httpClient.putAsync[TestModel]("http://127.0.0.1:3000/index/test/", TestModel("测试"), classOf[TestModel], {
+          akkaClient.process[TestModel](AkkaRequest("get", TestModel("测试")), {
             result =>
               assert(result.code == "200")
               assert(result.body.name == "测试")

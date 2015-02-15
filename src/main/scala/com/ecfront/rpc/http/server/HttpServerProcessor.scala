@@ -13,7 +13,10 @@ import io.vertx.ext.apex.core.{Cookie, RoutingContext}
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
-object HttpExecutor extends LazyLogging {
+/**
+ * HTTP 服务端处理器<br/>
+ */
+object HttpServerProcessor extends LazyLogging {
 
   private var vertx: Vertx = _
   private var baseUploadPath: String = _
@@ -25,7 +28,6 @@ object HttpExecutor extends LazyLogging {
       baseUploadPath += File.separator
     }
   }
-
 
   private[rpc] def uploadProcess(uploadPath: Option[String], allowType: Option[List[String]], fun: => (MultiMap, Set[String], Set[Cookie]) => Result[Any]) = {
     new Handler[RoutingContext] {

@@ -38,6 +38,7 @@
         <jdk.version>1.8</jdk.version>
         <ez-common.version>0.2.7</ez-common.version>
         <apex.version>3.0.0-milestone2</apex.version>
+        <akka.version>2.3.9</akka.version>
     </properties>
 
     <dependencies>
@@ -50,6 +51,16 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-apex</artifactId>
             <version>${apex.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.11</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-remote_2.11</artifactId>
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>

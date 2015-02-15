@@ -1,24 +1,30 @@
 package com.ecfront.rpc.http.client
 
-import com.ecfront.common.JsonHelper
+import com.ecfront.rpc.RPC.Result
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import io.vertx.core.http.{HttpClientOptions, HttpClientResponse, HttpMethod}
-import io.vertx.core.{Handler, Vertx}
+import io.vertx.core.http.HttpMethod
 
 /**
- * TODO HTTP 客户端<br/>
- * 支持标准的基于Json的Restful风格，返回结果为统一的HttpResult对象
+ * HTTP 客户端<br/>
  */
 class HttpClient extends LazyLogging {
 
-  val client = Vertx.vertx().createHttpClient(new HttpClientOptions().setKeepAlive(true))
-
-  private def execute(method: HttpMethod, url: String, body: Any): Unit = {
-    client.request(method, url, new Handler[HttpClientResponse] {
-      override def handle(event: HttpClientResponse): Unit = {
-      }
-    }).putHeader("content-type", "application/json; charset=UTF-8").end(JsonHelper.toJsonString(body))
+  def getAsync[E](url: String, responseBodyClass: Class[E] = null, fun: => Result[E] => Unit = null): Unit = {
+    HttpClientProcessor.process[E](HttpMethod.GET, url, "", responseBodyClass, fun)
   }
+
+  def deleteAsync[E](url: String, responseBodyClass: Class[E] = null, fun: => Result[E] => Unit = null): Unit = {
+    HttpClientProcessor.process[E](HttpMethod.DELETE, url, "", responseBodyClass, fun)
+  }
+
+  def postAsync[E](url: String, data: Any, responseBodyClass: Class[E] = null, fun: => Result[E] => Unit = null): Unit = {
+    HttpClientProcessor.process[E](HttpMethod.POST, url, data, responseBodyClass, fun)
+  }
+
+  def putAsync[E](url: String, data: Any, responseBodyClass: Class[E] = null, fun: => Result[E] => Unit = null): Unit = {
+    HttpClientProcessor.process[E](HttpMethod.PUT, url, data, responseBodyClass, fun)
+  }
+
 
 }
 

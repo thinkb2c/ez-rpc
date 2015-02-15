@@ -1,5 +1,7 @@
 package com.ecfront.rpc
 
+import com.ecfront.rpc.akka.client.AkkaClient
+import com.ecfront.rpc.akka.server.AkkaServer
 import com.ecfront.rpc.http.client.HttpClient
 import com.ecfront.rpc.http.server.HttpServer
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -18,17 +20,27 @@ object RPC {
      * 创建HTTP服务
      * @param port 端口
      * @param host 主机
+     * @param baseUploadPath 上传根目录
      * @return 服务实例
      */
     def http(port: Int, host: String = "0.0.0.0", baseUploadPath: String = "/tmp/"): HttpServer = {
       new HttpServer().startup(port, host, baseUploadPath)
     }
 
+    /**
+     * 创建Akka服务
+     * @param port 端口
+     * @param host 主机
+     * @return 服务实例
+     */
+    def akka(port: Int, host: String = "0.0.0.0"): AkkaServer = {
+      new AkkaServer().startup(port, host)
+    }
 
   }
 
   /**
-   * 创建一个客户端连接
+   * 创建客户端连接
    */
   object Client {
 
@@ -40,17 +52,28 @@ object RPC {
       new HttpClient()
     }
 
+    /**
+     * 创建Akka客户端实例
+     * @param port 端口
+     * @param host 主机
+     * @return 客户端实例
+     */
+    def akka(port: Int, host: String = "0.0.0.0"): AkkaClient = {
+      new AkkaClient().startup(port, host)
+    }
 
   }
 
   /**
    * 统一返回结果
    * @param code  结果状态码
-   * @param body 业务结果（消息主体）
+   * @param _body 业务结果（消息主体）, 最终返回的是 body
    * @param message 消息，多用于错误说明
    * @tparam E 业务结果的类型
    */
-  case class Result[E](code: String, body: E, message: String)
+  case class Result[E](code: String, message: String, private val _body: Option[E]) {
+    var body: E = _
+  }
 
   object Result extends LazyLogging {
 
@@ -58,41 +81,50 @@ object RPC {
     private[rpc] val BODY = "body"
     private[rpc] val MESSAGE = "message"
 
-    def success[E](body: E) = new Result[E](Code.SUCCESS, body, null)
-
-    def notFound(message: String) = {
-      logger.warn("[Result]Not found:" + message)
-      new Result[String](Code.NOT_FOUND, null, message)
+    def success[E](body: E) = {
+      val result = new Result[E](Code.SUCCESS, null, Some(body))
+      result.body = body
+      result
     }
 
-    def badRequest(message: String) = {
-      logger.warn("[Result]Bad request:" + message)
-      new Result[String](Code.BAD_REQUEST, null, message)
+    def notFound[E](message: String) = {
+      logger.warn("[Result] [%s] Not found: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.NOT_FOUND, message, null)
     }
 
-    def forbidden(message: String) = {
-      logger.warn("[Result]Forbidden:" + message)
-      new Result[String](Code.FORBIDDEN, null, message)
+    def badRequest[E](message: String) = {
+      logger.warn("[Result] [%s] Bad request: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.BAD_REQUEST, message, null)
     }
 
-    def unAuthorized(message: String) = {
-      logger.warn("[Result]Unauthorized:" + message)
-      new Result[String](Code.UNAUTHORIZED, null, message)
+    def forbidden[E](message: String) = {
+      logger.warn("[Result] [%s] Forbidden: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.FORBIDDEN, message, null)
     }
 
-    def serverError(message: String) = {
-      logger.error("[Result]Server error:" + message)
-      new Result[String](Code.INTERNAL_SERVER_ERROR, null, message)
+    def unAuthorized[E](message: String) = {
+      logger.warn("[Result] [%s] Unauthorized: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.UNAUTHORIZED, message, null)
     }
 
-    def notImplemented(message: String) = {
-      logger.error("[Result]Not implemented:" + message)
-      new Result[String](Code.NOT_IMPLEMENTED, null, message)
+    def serverError[E](message: String) = {
+      logger.error("[Result] [%s] Server error: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.INTERNAL_SERVER_ERROR, message, null)
     }
 
-    def serverUnavailable(message: String) = {
-      logger.error("[Result]Server unavailable:" + message)
-      new Result[String](Code.SERVICE_UNAVAILABLE, null, message)
+    def notImplemented[E](message: String) = {
+      logger.error("[Result] [%s] Not implemented: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.NOT_IMPLEMENTED, message, null)
+    }
+
+    def serverUnavailable[E](message: String) = {
+      logger.error("[Result] [%s] Server unavailable: %s".format(Code.NOT_FOUND, message))
+      new Result[E](Code.SERVICE_UNAVAILABLE, message, null)
+    }
+
+    def customFail[E](code: String, message: String) = {
+      logger.error("[Result] [%s] Custom fail: %s".format(Code.NOT_FOUND, message))
+      new Result[E](code, message, null)
     }
 
     /**

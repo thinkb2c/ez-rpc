@@ -1,6 +1,6 @@
 EZ RPC
 ===
-### 基于netty的RPC封装，支持Restful HTTP、Socket
+### 简洁易用的RPC服务，支持Restful HTTP、Akka
 
  =======================================================
 
@@ -9,72 +9,81 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>rpc</artifactId>
-        <version>0.8</version>
+        <version>0.9</version>
     </dependency>
 
 ###HTTP服务
 
-    RPC.Server.http(<Port>).<get|post|put|delete>("<URI>", <业务方法>).destroy()
+    RPC.Server.http(<Port>,[<Host>]).<get|post|put|delete|upload>("<URI>", [<请求数据类型>] , {
+        (param, body, cookie) =>
+              <业务方法>
+        })
 
-###HTTP请求
+###HTTP异步请求
 
-    //初始一个客户端实例
-    val client = new HttpClient
-    //发起一个请求，返回HttpResult对象，result.code为200表示成功，反之为失败
-    val result = client.<get|post|put|delete>("<URI>", classOf[<返回对象类型>])
+    RPC.Client.http.<get|post|put|delete>Async[<返回数据类型>](<Url>, classOf[<返回数据类型>], {
+          result =>
+            <业务方法>
+        })
 
-###Socket服务
+###Akka服务
 
-    RPC.Server.socket(<Port>) .process(<业务方法>).destroy()
+    RPC.Server.akka(<Port>,[<Host>]) .process({
+          request =>
+             <业务方法>
+        })
 
-###Socket请求
+###Akka请求
 
-    RPC.Client.socket(<Port>).send(<发送内容>).reply(<回复方法>).startup()
+    RPC.Client.akka(<Port>,[<Host>]).process[<返回数据类型>](AkkaRequest("<action>", <数据对象>), {
+         result =>
+              <业务方法>
+          })
 
 ##示例（更多示例见测试代码）
 
     //启动HTTP服务
      val httpServer = RPC.Server.http(3000)
     //注册一个GET方法
-     httpServer.get("/user/:id/", new SimpleHttpFun {
-           override def execute(parameters: Map[String, String], body: String, cookies: Set[Cookie]): RPC.Result[_] = {
-             //返回成功消息
-             RPC.Result.success[Map[String, String]](parameters)
-           }
-     })
-    //注册一个POST方法
-     httpServer.post("/user/", new HttpFun(classOf[Person]) {
-           override def execute(parameters: Map[String, String], body: Person, cookies: Set[Cookie]): RPC.Result[_] = {
-            //返回成功消息
-             RPC.Result.success[Person](body)
-           }
-     })
+    httpServer.get("/index/", {
+      (param, cookie) =>
+        Result.success("完成")
+    })
+    //注册一个PUT方法，处理TestModel类型
+    httpServer.put[TestModel]("/index/:id/", classOf[TestModel], {
+      (param, body, cookie) =>
+        assert(param.get("id") == "test")
+        Result.success(body)
+    })
     //启动HTTP请求
      val client = RPC.Client.http
-     val result1 = client.get("http://127.0.0.1:3000/user/100/?arg=测试", classOf[String])
-     val result2 = client.post("http://127.0.0.1:3000/user/", Person("孤岛旭日",Address("HangZhou")), classOf[Person])
-    //关闭HTTP服务
-    httpServer.destroy
-
-    //注册Socket服务
-    RPC.Server.socket(3001).process(new SocketServerFun(classOf[Person]) {
-           override def execute(person: Person): Result[_] = {
-             assert(person.address.addr == "杭州")
-             person.name = "modify"
-             RPC.Result.success[Person](person)
-           }
+     httpClient.getAsync[String]("http://127.0.0.1:3000/index/", classOf[String], {
+       result =>
+         assert(result.code == "200")
+         assert(result.body == "完成")
+         latch.countDown()
+     })
+    httpClient.putAsync[TestModel]("http://127.0.0.1:3000/index/test/", TestModel("测试"), classOf[TestModel], {
+      result =>
+        assert(result.code == "200")
+        assert(result.body.name == "测试")
+        latch.countDown()
     })
-    //发起Socket请求
-    RPC.Client.socket(3001).send(Person("孤岛旭日", Address("杭州"))).reply(new SocketClientFun(classOf[Person]) {
-           override def execute(code: String, person: Person, message: String): Any = {
-             assert(person.name == "modify")
-             assert(code == "200")
-           }
-    }).startup()
 
+    //注册Akka服务
+    RPC.Server.akka(3000).process({
+           req =>
+             Result.success(req.body)
+         })
+    //发起Akka请求
+    RPC.Client.akka(3000).process[TestModel](AkkaRequest("get", TestModel("测试")), {
+          result =>
+            assert(result.code == "200")
+            assert(result.body.name == "测试")
+            latch.countDown()
+        })
 
-     case class Person(var name: String,var address:Address)
-     case class Address(var addr: String)
+    case class TestModel(name: String)
 
 =======================================================
 
