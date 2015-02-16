@@ -46,46 +46,46 @@ EZ RPC
 
 ##示例（更多示例见测试代码）
 
-    val server = RPC.server.setChannel(false).startup()                                          //使用http通道，开启服务
-         .get("/index/", {                                                                       //注册 get:/index/
-           (parameter, _) =>                                                                     //parameter是url参数，_是占位符，因为get操作没有body值
+    val server = RPC.server.setChannel(false).startup()                                 //使用http通道，开启服务
+         .get("/index/", {                                                              //注册 get:/index/
+           (parameter, _) =>                                                            //parameter是url参数，_是占位符，因为get操作没有body值
              //业务操作
-             Result.success("完成")                                                              //返回Result包装的统一对象
-         }).post[String]("/index/", classOf[String], {                                           //注册 post:/index/
-           (parameter, body) =>                                                                  //body为请求对象
+             Result.success("完成")                                                     //返回Result包装的统一对象
+         }).post[String]("/index/", classOf[String], {                                  //注册 post:/index/
+           (parameter, body) =>                                                         //body为请求对象
               //业务操作
              Result.success(body)
-         }).put[TestModel]("/index/:id/", classOf[TestModel], {                                  //注册 put:/index/:id/ ，url可加动态参数，用:开头
+         }).put[TestModel]("/index/:id/", classOf[TestModel], {                         //注册 put:/index/:id/ ，url可加动态参数，用:开头
            (param, body) =>
               //业务操作
              Result.success(body)
          }).put[TestModel]("/custom/:id/", classOf[TestModel], {
            (param, body) =>
              //业务操作
-             body                                                                                //返回原生方法（不用Result包装）
+             body                                                                       //返回原生方法（不用Result包装）
          })
 
-    val client = RPC.client.setChannel(false).startup()                                          //使用http通道，开启连接
-        .get[String]("/index/", classOf[String], {                                               //获取资源
+    val client = RPC.client.setChannel(false).startup()                                 //使用http通道，开启连接
+        .get[String]("/index/", classOf[String], {                                      //获取资源
           result =>
-            assert(result.code == "200")                                                         //返回的状态码，详见RPC.Code
-            assert(result.body == "完成")                                                        //返回的是Result包装对象，body属性为实际内容
-        }).post[String]("/index/", "测试", classOf[String], {                                    //添加资源
+            assert(result.code == "200")                                                //返回的状态码，详见RPC.Code
+            assert(result.body == "完成")                                               //返回的是Result包装对象，body属性为实际内容
+        }).post[String]("/index/", "测试", classOf[String], {                           //添加资源
           result =>
             assert(result.code == "200")
             assert(result.body == "测试")
-        }).put[TestModel]("/index/test/", TestModel("测试"), classOf[TestModel], {               //更新资源，资源可为自定义对象
+        }).put[TestModel]("/index/test/", TestModel("测试"), classOf[TestModel], {      //更新资源，资源可为自定义对象
           result =>
             assert(result.code == "200")
             assert(result.body.name == "测试")
-        }).put[TestModel]("/index/test/", TestModel("测试"))                                     //更新资源，不需要回调操作
+        }).put[TestModel]("/index/test/", TestModel("测试"))                            //更新资源，不需要回调操作
 
-    client.raw.put[TestModel]("/custom/test/", TestModel("测试"), classOf[TestModel], {          //raw 表示操作返回值为原生对象
+    client.raw.put[TestModel]("/custom/test/", TestModel("测试"), classOf[TestModel], { //raw 表示操作返回值为原生对象
           result =>
-            assert(result.name == "测试")                                                        //此时返回值为原生对象（没有Result包装）
+            assert(result.name == "测试")                                               //此时返回值为原生对象（没有Result包装）
         })
 
-    server.shutdown()                                                                            //关闭服务
+    server.shutdown()                                                                   //关闭服务
 
     case class TestModel(name: String)
 
