@@ -46,6 +46,16 @@
             <groupId>com.ecfront</groupId>
             <artifactId>ez-common</artifactId>
             <version>${ez-common.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
@@ -61,6 +71,12 @@
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote_2.11</artifactId>
             <version>${akka.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.uncommons.maths</groupId>
+                    <artifactId>uncommons-maths</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
