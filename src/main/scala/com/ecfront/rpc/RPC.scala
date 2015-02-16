@@ -1,9 +1,5 @@
 package com.ecfront.rpc
 
-import com.ecfront.rpc.akka.client.AkkaClient
-import com.ecfront.rpc.akka.server.AkkaServer
-import com.ecfront.rpc.http.client.HttpClient
-import com.ecfront.rpc.http.server.HttpServer
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
@@ -14,55 +10,12 @@ object RPC {
   /**
    * 创建一个服务器
    */
-  object Server {
-
-    /**
-     * 创建HTTP服务
-     * @param port 端口
-     * @param host 主机
-     * @param baseUploadPath 上传根目录
-     * @return 服务实例
-     */
-    def http(port: Int, host: String = "0.0.0.0", baseUploadPath: String = "/tmp/"): HttpServer = {
-      new HttpServer().startup(port, host, baseUploadPath)
-    }
-
-    /**
-     * 创建Akka服务
-     * @param port 端口
-     * @param host 主机
-     * @return 服务实例
-     */
-    def akka(port: Int, host: String = "0.0.0.0"): AkkaServer = {
-      new AkkaServer().startup(port, host)
-    }
-
-  }
+  def server = new Server
 
   /**
-   * 创建客户端连接
+   * 创建一个连接客户端
    */
-  object Client {
-
-    /**
-     * 创建HTTP客户端实例
-     * @return  客户端实例
-     */
-    def http: HttpClient = {
-      new HttpClient()
-    }
-
-    /**
-     * 创建Akka客户端实例
-     * @param port 端口
-     * @param host 主机
-     * @return 客户端实例
-     */
-    def akka(port: Int, host: String = "0.0.0.0"): AkkaClient = {
-      new AkkaClient().startup(port, host)
-    }
-
-  }
+  def client = new Client
 
   /**
    * 统一返回结果

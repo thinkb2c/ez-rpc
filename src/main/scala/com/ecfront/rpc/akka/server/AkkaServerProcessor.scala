@@ -1,18 +1,17 @@
 package com.ecfront.rpc.akka.server
 
-import akka.actor.{Actor, ActorSystem, Props}
-import com.ecfront.rpc.RPC.Result
-import com.ecfront.rpc.RPC.Result.Code
+import akka.actor.ActorSystem
+import com.ecfront.rpc.process.ServerProcessor
 import com.typesafe.config.ConfigFactory
 
 /**
- * AKKA 服务端处理器<br/>
+ * AKKA 服务处理器
  */
-object AkkaServerProcessor {
+class AkkaServerProcessor extends ServerProcessor {
 
   private var system: ActorSystem = _
 
-  private[rpc] def init(port: Int, host: String) {
+  override def init() {
     system = ActorSystem("EZ-RPC-System", ConfigFactory.parseString(
       """
         |akka {
@@ -28,24 +27,12 @@ object AkkaServerProcessor {
         |  }
         |}
       """.stripMargin.format(host, port)).withFallback(ConfigFactory.load()))
+    system.actorOf(AkkaActor.props(router), name = "EZ-RPC")
   }
 
-  private[rpc] def process(fun: => AkkaRequest => Result[Any]): Unit = {
-    system.actorOf(props(fun), name = "EZ-RPC")
+  override private[rpc] def destroy(): Unit = {
+    system.shutdown()
   }
-
-  private def props(fun: => AkkaRequest => Result[Any]): Props = Props(new AkkaServerProcessor(fun))
 
 }
 
-class AkkaServerProcessor(fun: => AkkaRequest => Result[Any]) extends Actor {
-  def receive = {
-    case AkkaRequest(action, body) =>
-      val tmpSender = sender()
-      if (null == action || action.trim.isEmpty) {
-        tmpSender ! Result.customFail(Code.BAD_REQUEST, "Request parameter must contain [action].")
-      } else if (fun != null) {
-        tmpSender ! fun(AkkaRequest(action, body))
-      }
-  }
-}
