@@ -36,7 +36,7 @@
 
     <properties>
         <jdk.version>1.8</jdk.version>
-        <ez-common.version>0.2.7</ez-common.version>
+        <ez-common.version>0.2.9</ez-common.version>
         <vertx.version>3.0.0-milestone2</vertx.version>
         <akka.version>2.3.9</akka.version>
     </properties>
