@@ -17,7 +17,7 @@ EZ RPC
 
     <dependency>
         <groupId>com.ecfront</groupId>
-        <artifactId>rpc</artifactId>
+        <artifactId>ez-rpc</artifactId>
         <version>1.1</version>
     </dependency>
 
