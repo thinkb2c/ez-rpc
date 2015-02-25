@@ -84,7 +84,6 @@ object RPC {
      * 结果状态码
      */
     object Code extends Enumeration {
-      type HttpCode = Value
       val SUCCESS = Value("200").toString
       val BAD_REQUEST = Value("400").toString
       val UNAUTHORIZED = Value("401").toString
