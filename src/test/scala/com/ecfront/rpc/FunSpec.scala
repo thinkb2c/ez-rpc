@@ -8,11 +8,12 @@ import org.scalatest.FunSuite
 class FunSpec extends FunSuite {
 
   test("功能测试") {
-    funTest(highPerformance = false)
-    funTest(highPerformance = true)
+    jsonFunTest(highPerformance = false)
+    jsonFunTest(highPerformance = true)
+    xmlFunTest()
   }
 
-  def funTest(highPerformance: Boolean) {
+  def jsonFunTest(highPerformance: Boolean) {
     val latch = new CountDownLatch(6)
 
     val server = RPC.server.setChannel(highPerformance).startup()
@@ -74,16 +75,50 @@ class FunSpec extends FunSuite {
         latch.countDown()
     }).put[TestModel]("/index/test/", TestModel("测试"))
 
+    //raw json
     client.raw.put[TestModel]("/custom/test/", TestModel("测试"), classOf[TestModel], {
       result =>
         assert(result.name == "测试")
         latch.countDown()
     })
+
     latch.await()
+
+    assert(client.getSync[Long]("/number/", classOf[Long]).get.body == 1L)
+    assert(client.getSync[Boolean]("/boolean/", classOf[Boolean]).get.body)
+    assert(client.getSync[String]("/index/", classOf[String]).get.body == "完成")
+    assert(client.postSync[String]("/index/", "测试", classOf[String]).get.body == "测试")
+    assert(client.putSync[TestModel]("/index/test/", TestModel("测试"), classOf[TestModel]).get.body.name == "测试")
+    client.putSync[TestModel]("/index/test/", TestModel("测试"))
+    assert(client.raw.putSync[TestModel]("/custom/test/", TestModel("测试"), classOf[TestModel]).get.name == "测试")
 
     server.shutdown()
   }
+
+  def xmlFunTest(): Unit = {
+    val server = RPC.server.setPort(3001).setChannel(false).startup()
+      .put[scala.xml.Node]("/custom/:id/", classOf[scala.xml.Node], {
+      (param, body) =>
+        assert((body \ "city").size != 0)
+        body
+    })
+    //raw xml must channel=false and request class = scala.xml.Node
+    val latch = new CountDownLatch(1)
+    val xmlClient = RPC.client.setPort(3001).setChannel(false).startup().raw
+    xmlClient.get[scala.xml.Node]("http://flash.weather.com.cn:80/wmaps/xml/china.xml", classOf[scala.xml.Node], {
+      result =>
+        assert((result \ "city").size != 0)
+        xmlClient.put[scala.xml.Node]("/custom/test/", result, classOf[scala.xml.Node], {
+          result2 =>
+            assert(result2.toString() == result.toString())
+            latch.countDown()
+        })
+    })
+    latch.await()
+    server.shutdown()
+  }
 }
+
 
 case class TestModel(name: String)
 

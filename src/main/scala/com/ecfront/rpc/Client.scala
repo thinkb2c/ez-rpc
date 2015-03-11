@@ -6,6 +6,9 @@ import com.ecfront.rpc.http.client.HttpClientProcessor
 import com.ecfront.rpc.process.ClientProcessor
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 /**
  * 连接客户端<br/>
  * 支持标准的基于Json的Restful风格，返回结果为统一的Result或自定义对象
@@ -70,6 +73,16 @@ class Client extends LazyLogging {
   }
 
   /**
+   * 获取资源（同步）
+   * @param path 资源路径
+   * @param responseClass 返回对象的类型
+   * @return Result包装对象
+   */
+  def getSync[E](path: String, responseClass: Class[E] = null): Option[Result[E]] = {
+    Await.result(processor.process[E]("GET", path, null, responseClass), Duration.Inf)
+  }
+
+  /**
    * 删除资源
    * @param path 资源路径
    * @param responseClass 返回对象的类型
@@ -79,6 +92,16 @@ class Client extends LazyLogging {
   def delete[E](path: String, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
     processor.process[E]("DELETE", path, null, responseClass, fun)
     this
+  }
+
+  /**
+   * 删除资源（同步）
+   * @param path 资源路径
+   * @param responseClass 返回对象的类型
+   * @return Result包装对象
+   */
+  def deleteSync[E](path: String, responseClass: Class[E] = null): Option[Result[E]] = {
+    Await.result(processor.process[E]("DELETE", path, null, responseClass), Duration.Inf)
   }
 
   /**
@@ -95,6 +118,17 @@ class Client extends LazyLogging {
   }
 
   /**
+   * 添加资源（同步）
+   * @param path 资源路径
+   * @param data 资源对象
+   * @param responseClass 返回对象的类型
+   * @return Result包装对象
+   */
+  def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Result[E]] = {
+    Await.result(processor.process[E]("POST", path, data, responseClass), Duration.Inf)
+  }
+
+  /**
    * 更新资源
    * @param path 资源路径
    * @param data 资源对象
@@ -105,6 +139,17 @@ class Client extends LazyLogging {
   def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
     processor.process[E]("PUT", path, data, responseClass, fun)
     this
+  }
+
+  /**
+   * 更新资源（同步）
+   * @param path 资源路径
+   * @param data 资源对象
+   * @param responseClass 返回对象的类型
+   * @return Result包装对象
+   */
+  def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Result[E]] = {
+    Await.result(processor.process[E]("PUT", path, data, responseClass), Duration.Inf)
   }
 
   /**
@@ -127,6 +172,16 @@ class Client extends LazyLogging {
     }
 
     /**
+     * 获取资源（同步）
+     * @param path 资源路径
+     * @param responseClass 返回对象的类型
+     * @return 原生对象
+     */
+    def getSync[E](path: String, responseClass: Class[E] = null): Option[E] = {
+      Await.result(processor.processRaw[E]("GET", path, "", responseClass), Duration.Inf)
+    }
+
+    /**
      * 删除资源
      * @param path 资源路径
      * @param responseClass 返回对象的类型
@@ -136,6 +191,16 @@ class Client extends LazyLogging {
     def delete[E](path: String, responseClass: Class[E] = null, fun: => E => Unit = null) = {
       processor.processRaw[E]("DELETE", path, "", responseClass, fun)
       this
+    }
+
+    /**
+     * 删除资源（同步）
+     * @param path 资源路径
+     * @param responseClass 返回对象的类型
+     * @return 原生对象
+     */
+    def deleteSync[E](path: String, responseClass: Class[E] = null): Option[E] = {
+      Await.result(processor.processRaw[E]("DELETE", path, "", responseClass), Duration.Inf)
     }
 
     /**
@@ -152,6 +217,17 @@ class Client extends LazyLogging {
     }
 
     /**
+     * 添加资源（同步）
+     * @param path 资源路径
+     * @param data 资源对象
+     * @param responseClass 返回对象的类型
+     * @return 原生对象
+     */
+    def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[E] = {
+      Await.result(processor.processRaw[E]("POST", path, data, responseClass), Duration.Inf)
+    }
+
+    /**
      * 更新资源
      * @param path 资源路径
      * @param data 资源对象
@@ -162,6 +238,17 @@ class Client extends LazyLogging {
     def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => E => Unit = null) = {
       processor.processRaw[E]("PUT", path, data, responseClass, fun)
       this
+    }
+
+    /**
+     * 更新资源（同步）
+     * @param path 资源路径
+     * @param data 资源对象
+     * @param responseClass 返回对象的类型
+     * @return 原生对象
+     */
+    def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[E] = {
+      Await.result(processor.processRaw[E]("PUT", path, data, responseClass), Duration.Inf)
     }
   }
 

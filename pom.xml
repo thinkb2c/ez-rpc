@@ -16,7 +16,7 @@
     <description>RPC模块</description>
     <url>https://github.com/gudaoxuri/ez-rpc</url>
     <packaging>jar</packaging>
-    <version>1.1</version>
+    <version>1.5</version>
 
     <scm>
         <connection>scm:git:git@github.com:gudaoxuri/ez-rpc.git</connection>
@@ -26,6 +26,7 @@
 
     <properties>
         <ez-common.version>0.3.2</ez-common.version>
+        <scala-xml.version>1.0.3</scala-xml.version>
         <vertx.version>3.0.0-milestone2</vertx.version>
         <akka.version>2.3.9</akka.version>
     </properties>
@@ -45,6 +46,11 @@
                     <artifactId>jsr305</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_2.11</artifactId>
+            <version>${scala-xml.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>

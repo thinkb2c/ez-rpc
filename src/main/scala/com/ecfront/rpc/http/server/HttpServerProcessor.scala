@@ -24,26 +24,31 @@ class HttpServerProcessor extends ServerProcessor {
     val latch = new CountDownLatch(1)
     server = vertx.createHttpServer(new HttpServerOptions().setHost(host).setPort(port).setCompressionSupported(true))
       .requestHandler(new Handler[HttpServerRequest] {
-      override def handle(event: HttpServerRequest): Unit = {
-        val (fun, urlParameter) = router.getFunction(event.method().name(), event.path())
+      override def handle(request: HttpServerRequest): Unit = {
+        val (fun, urlParameter) = router.getFunction(request.method().name(), request.path())
+        val contentType = request.headers().get("content-type").toLowerCase
         if (fun != null) {
-          event.params().entries().foreach {
+          request.params().entries().foreach {
             item =>
               urlParameter += (item.getKey -> item.getValue)
           }
-          if (event.method().name() == "POST" || event.method().name() == "PUT") {
-            event.bodyHandler(new Handler[Buffer] {
+          if (request.method().name() == "POST" || request.method().name() == "PUT") {
+            request.bodyHandler(new Handler[Buffer] {
               override def handle(data: Buffer): Unit = {
-                val body = JsonHelper.toObject(data.getString(0, data.length), fun.requestClass)
-                execute(urlParameter.toMap, body, fun, event.response())
+                val body = contentType match {
+                  case t if t.contains("json") => JsonHelper.toObject(data.getString(0, data.length), fun.requestClass)
+                  case t if t.contains("xml") => scala.xml.XML.loadString(data.getString(0, data.length))
+                  case _ => logger.error("Not support content type:" + contentType)
+                }
+                execute(urlParameter.toMap, body, fun, request.response(), contentType)
               }
             })
           } else {
-            execute(urlParameter.toMap, null, fun, event.response())
+            execute(urlParameter.toMap, null, fun, request.response(), contentType)
           }
         } else {
-          logger.warn("Not implemented: [ %s ] %s".format(event.method().name(), event.path()))
-          returnJson(Result.badRequest("[ %s ] %s".format(event.method().name(), event.path())), event.response())
+          logger.warn("Not implemented: [ %s ] %s".format(request.method().name(), request.path()))
+          returnContent(Result.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
         }
       }
     }).listen(new Handler[AsyncResult[HttpServer]] {
@@ -72,25 +77,32 @@ class HttpServerProcessor extends ServerProcessor {
     latch.await()
   }
 
-  def execute(parameter: Map[String, String], body: Any, fun: Fun[_], response: HttpServerResponse) {
+  private def execute(parameter: Map[String, String], body: Any, fun: Fun[_], response: HttpServerResponse, contentType: String) {
     vertx.executeBlocking(new Handler[Future[Any]] {
       override def handle(future: Future[Any]): Unit = {
         future.complete(fun.execute(parameter, body))
       }
     }, new Handler[AsyncResult[Any]] {
       override def handle(result: AsyncResult[Any]): Unit = {
-        returnJson(result.result(), response)
+        returnContent(result.result(), response, contentType)
       }
     })
   }
 
-  private def returnJson(result: Any, response: HttpServerResponse) {
-    response.setStatusCode(200).putHeader("Content-Type", "application/json; charset=UTF-8")
+  private def returnContent(result: Any, response: HttpServerResponse, contentType: String) {
+    val body = contentType match {
+      case t if t.contains("json") => JsonHelper.toJsonString(result)
+      case t if t.contains("xml") => result.toString
+      case _ =>
+        logger.error("Not support content type:" + contentType)
+        ""
+    }
+    response.setStatusCode(200).putHeader("Content-Type", contentType)
       .putHeader("Cache-Control", "no-cache")
       .putHeader("Access-Control-Allow-Origin", "*")
       .putHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
       .putHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-authentication, X-client")
-      .end(JsonHelper.toJsonString(result))
+      .end(body)
   }
 
   /*private[rpc] def uploadProcess(uploadPath: Option[String], allowType: Option[List[String]], fun: => (MultiMap, Set[String], Set[Cookie]) => Result[Any]) = {

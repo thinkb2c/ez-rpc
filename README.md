@@ -12,13 +12,15 @@ EZ RPC
 1. 支持启动多个RPC服务（@see MultiSpec）
 1. 类库形式，侵入性低，集成友好
 1. 支持链式编程风格，使用方便
+1. client支持异步与同步模式
+1. 支持Json（推荐Json格式）与Xml
 
 ##使用
 
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-rpc</artifactId>
-        <version>1.1</version>
+        <version>1.5</version>
     </dependency>
 
 ###开启RPC服务
@@ -29,7 +31,9 @@ EZ RPC
         }
     ).shutdown()
 
-###访问RPC服务
+*使用xml格式时需要setChannel(false)，<请求数据类型>为`scala.xml.Node`*
+
+###访问RPC服务（异步）
 
     RPC.client.startup().<get|post|put|delete>[<返回数据类型>](<URI>, [请求数据对象],[<返回数据类型>], {
         result =>
@@ -37,12 +41,17 @@ EZ RPC
         }
     )
 
+###访问RPC服务（同步）
+
+    RPC.client.startup().<get|post|put|delete>[<返回数据类型>](<URI>, [请求数据对象],[<返回数据类型>]):Option[Result[<返回数据类型>])
+
+*使用xml格式时需要setChannel(false)，<返回数据类型>为`scala.xml.Node`*
+
 ###参数设置
 
 *  端口：`RPC.<server|client>.setPort(<端口，默认8080>)`
 *  主机：`RPC.<server|client>.setHost(<主机，默认0.0.0.0>)`
 *  通道（HTTP或Akka）：`RPC.<server|client>.setChannel(<true|false，true为Akka通道，false为HTTP通道，默认为true>)`
-
 
 ##示例（更多示例见测试代码）
 
@@ -84,6 +93,8 @@ EZ RPC
           result =>
             assert(result.name == "测试")                                               //此时返回值为原生对象（没有Result包装）
         })
+
+    assert(client.getSync[Boolean]("/boolean/", classOf[Boolean]).get.body)
 
     server.shutdown()                                                                   //关闭服务
 
