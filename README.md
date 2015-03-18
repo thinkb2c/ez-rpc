@@ -20,7 +20,7 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-rpc</artifactId>
-        <version>1.5</version>
+        <version>1.6</version>
     </dependency>
 
 ###开启RPC服务
