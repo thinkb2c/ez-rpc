@@ -120,6 +120,52 @@ class Server extends LazyLogging {
     this
   }
 
+  object reflect {
+    /**
+     * 注册添加资源的方法
+     * @param path 资源路径
+     * @param requestClass 请求对象的类型
+     * @param function 业务方法
+     */
+    def post(path: String, requestClass: Class[_], function: (Map[String, String], Any) => Any) = {
+      router.add("POST", path, requestClass, function)
+      this
+    }
+
+    /**
+     * 注册更新资源的方法
+     * @param path 资源路径
+     * @param requestClass 请求对象的类型
+     * @param function 业务方法
+     */
+    def put(path: String, requestClass: Class[_], function: => (Map[String, String], Any) => Any) = {
+      router.add("PUT", path, requestClass, function)
+      this
+    }
+
+
+    /**
+     * 注册删除资源的方法
+     * @param path 资源路径
+     * @param function 业务方法
+     */
+    def delete(path: String, function: => (Map[String, String], Void) => Any) = {
+      router.add("DELETE", path, classOf[Void], function)
+      this
+    }
+
+
+    /**
+     * 注册获取资源的方法
+     * @param path 资源路径
+     * @param function 业务方法
+     */
+    def get(path: String, function: => (Map[String, String], Void) => Any) = {
+      router.add("GET", path, classOf[Void], function)
+      this
+    }
+  }
+
   /* /**
     * 注册上传方法
     *
