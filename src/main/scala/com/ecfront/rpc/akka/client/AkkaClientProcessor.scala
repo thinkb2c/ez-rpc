@@ -16,19 +16,28 @@ import scala.concurrent.{Await, Future, Promise}
  */
 class AkkaClientProcessor extends ClientProcessor {
 
-  private val system: ActorSystem = ActorSystem("EZ-RPC-System", ConfigFactory.parseString(
-    """
-      |akka {
-      |  actor {
-      |    provider = "akka.remote.RemoteActorRefProvider"
-      |  }
-      |}
-    """.stripMargin).withFallback(ConfigFactory.load()))
+  private var system: ActorSystem = _
+
   implicit val timeout = Timeout(20 minutes)
 
   private var actor: ActorSelection = _
 
   override protected def init(): Unit = {
+    system = ActorSystem("EZ-RPC-System", ConfigFactory.parseString(
+      """
+        |akka {
+        |  actor {
+        |    provider = "akka.remote.RemoteActorRefProvider"
+        |  }
+        |  remote {
+        |    enabled-transports = ["akka.remote.netty.tcp"]
+        |    netty.tcp {
+        |      hostname = "%s"
+        |      port = 0
+        |    }
+        |  }
+        |}
+      """.stripMargin.format(host)).withFallback(ConfigFactory.load()))
     actor = system.actorSelection("akka.tcp://EZ-RPC-System@" + host + ":" + port + "/user/EZ-RPC")
   }
 

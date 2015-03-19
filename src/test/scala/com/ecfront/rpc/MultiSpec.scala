@@ -20,8 +20,15 @@ class MultiSpec extends FunSuite {
       (param, _) =>
         Result.success("OK3")
     })
-
-    val latch = new CountDownLatch(3)
+    RPC.server.setChannel(true).setPort(8004).startup().get("/test/", {
+      (param, _) =>
+        Result.success("OK4")
+    })
+    RPC.server.setChannel(true).setPort(8005).startup().get("/test/", {
+      (param, _) =>
+        Result.success("OK5")
+    })
+    val latch = new CountDownLatch(6)
 
     RPC.client.setChannel(false).setPort(8001).startup().get[String]("/test/", classOf[String], {
       result =>
@@ -41,7 +48,24 @@ class MultiSpec extends FunSuite {
         assert(result.body == "OK3")
         latch.countDown()
     })
-
+    RPC.client.setChannel(true).setPort(8004).startup().get[String]("/test/", classOf[String], {
+      result =>
+        assert(result.code == "200")
+        assert(result.body == "OK4")
+        latch.countDown()
+    })
+    RPC.client.setChannel(true).setPort(8005).startup().get[String]("/test/", classOf[String], {
+      result =>
+        assert(result.code == "200")
+        assert(result.body == "OK5")
+        latch.countDown()
+    })
+    RPC.client.setChannel(true).setPort(8005).startup().get[String]("/test/", classOf[String], {
+      result =>
+        assert(result.code == "200")
+        assert(result.body == "OK5")
+        latch.countDown()
+    })
     latch.await()
   }
 

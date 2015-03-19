@@ -120,6 +120,9 @@ class Server extends LazyLogging {
     this
   }
 
+  /**
+   * 反射调用，反射时避免类型type处理
+   */
   object reflect {
     /**
      * 注册添加资源的方法
