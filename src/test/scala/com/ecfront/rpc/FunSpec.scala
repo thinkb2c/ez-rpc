@@ -16,7 +16,7 @@ class FunSpec extends FunSuite {
   def jsonFunTest(highPerformance: Boolean) {
     val latch = new CountDownLatch(6)
 
-    val server = RPC.server.setChannel(highPerformance).startup()
+    val server = RPC.server.setPort(808).setChannel(highPerformance).startup()
       .get("/number/", {
       (param, _) =>
         Result.success(1L)
@@ -47,7 +47,7 @@ class FunSpec extends FunSuite {
          Result.success(files)
      })*/
 
-    val client = RPC.client.setChannel(highPerformance).startup()
+    val client = RPC.client.setPort(808).setChannel(highPerformance).startup()
       .get[Long]("/number/", classOf[Long], {
       result =>
         assert(result.code == "200")

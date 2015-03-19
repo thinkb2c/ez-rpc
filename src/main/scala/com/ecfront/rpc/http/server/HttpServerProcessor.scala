@@ -25,31 +25,33 @@ class HttpServerProcessor extends ServerProcessor {
     server = vertx.createHttpServer(new HttpServerOptions().setHost(host).setPort(port).setCompressionSupported(true))
       .requestHandler(new Handler[HttpServerRequest] {
       override def handle(request: HttpServerRequest): Unit = {
-        val (fun, urlParameter) = router.getFunction(request.method().name(), request.path())
-        val contentType =
-          if (request.headers().contains("content-type")) request.headers().get("content-type").toLowerCase else "application/json; charset=UTF-8"
-        if (fun != null) {
-          request.params().entries().foreach {
-            item =>
-              urlParameter += (item.getKey -> item.getValue)
-          }
-          if (request.method().name() == "POST" || request.method().name() == "PUT") {
-            request.bodyHandler(new Handler[Buffer] {
-              override def handle(data: Buffer): Unit = {
-                val body = contentType match {
-                  case t if t.contains("json") => JsonHelper.toObject(data.getString(0, data.length), fun.requestClass)
-                  case t if t.contains("xml") => scala.xml.XML.loadString(data.getString(0, data.length))
-                  case _ => logger.error("Not support content type:" + contentType)
+        if (request.path() != "/favicon.ico") {
+          val (fun, urlParameter) = router.getFunction(request.method().name(), request.path())
+          val contentType =
+            if (request.headers().contains("content-type")) request.headers().get("content-type").toLowerCase else "application/json; charset=UTF-8"
+          if (fun != null) {
+            request.params().entries().foreach {
+              item =>
+                urlParameter += (item.getKey -> item.getValue)
+            }
+            if (request.method().name() == "POST" || request.method().name() == "PUT") {
+              request.bodyHandler(new Handler[Buffer] {
+                override def handle(data: Buffer): Unit = {
+                  val body = contentType match {
+                    case t if t.contains("json") => JsonHelper.toObject(data.getString(0, data.length), fun.requestClass)
+                    case t if t.contains("xml") => scala.xml.XML.loadString(data.getString(0, data.length))
+                    case _ => logger.error("Not support content type:" + contentType)
+                  }
+                  execute(urlParameter.toMap, body, fun, request.response(), contentType)
                 }
-                execute(urlParameter.toMap, body, fun, request.response(), contentType)
-              }
-            })
+              })
+            } else {
+              execute(urlParameter.toMap, null, fun, request.response(), contentType)
+            }
           } else {
-            execute(urlParameter.toMap, null, fun, request.response(), contentType)
+            logger.warn("Not implemented: [ %s ] %s".format(request.method().name(), request.path()))
+            returnContent(Result.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
           }
-        } else {
-          logger.warn("Not implemented: [ %s ] %s".format(request.method().name(), request.path()))
-          returnContent(Result.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
         }
       }
     }).listen(new Handler[AsyncResult[HttpServer]] {

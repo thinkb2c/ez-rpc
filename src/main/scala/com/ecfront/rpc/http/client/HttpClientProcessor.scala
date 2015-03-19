@@ -1,5 +1,7 @@
 package com.ecfront.rpc.http.client
 
+import java.net.URL
+
 import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.RPC.Result
 import com.ecfront.rpc.RPC.Result.Code
@@ -22,10 +24,24 @@ class HttpClientProcessor extends ClientProcessor {
 
   }
 
+  private def getUrlInfo(path: String): (String, Int, String) = {
+    var tHost = host
+    var tPort = port
+    var tPath = path
+    if (path.toLowerCase.startsWith("http")) {
+      val url = new URL(path)
+      tHost = url.getHost
+      tPort = url.getPort
+      tPath = url.getPath
+    }
+    (tHost, tPort, tPath)
+  }
+
   override protected[rpc] def processRaw[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (E) => Unit): Unit = {
     val jsonType = responseClass != classOf[scala.xml.Node]
     val body: String = getBody(requestBody, if (jsonType) "json" else "xml")
-    client.request(HttpMethod.valueOf(method), if (path.toLowerCase.startsWith("http")) path else s"http://$host:$port$path", new Handler[HttpClientResponse] {
+    val (tHost, tPort, tPath) = getUrlInfo(path)
+    client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (fun != null) {
           if (response.statusCode + "" != Code.SUCCESS) {
@@ -51,7 +67,8 @@ class HttpClientProcessor extends ClientProcessor {
     val jsonType = responseClass != classOf[scala.xml.Node]
     val p = Promise[Option[E]]()
     val body: String = getBody(requestBody, if (jsonType) "json" else "xml")
-    client.request(HttpMethod.valueOf(method), if (path.toLowerCase.startsWith("http")) path else s"http://$host:$port$path", new Handler[HttpClientResponse] {
+    val (tHost, tPort, tPath) = getUrlInfo(path)
+    client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (responseClass != null) {
           if (response.statusCode + "" != Code.SUCCESS) {
@@ -79,7 +96,8 @@ class HttpClientProcessor extends ClientProcessor {
 
   override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Result[E]) => Unit): Unit = {
     val body: String = getBody(requestBody, "json")
-    client.request(HttpMethod.valueOf(method), s"http://$host:$port$path", new Handler[HttpClientResponse] {
+    val (tHost, tPort, tPath) = getUrlInfo(path)
+    client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (fun != null) {
           if (response.statusCode + "" != Code.SUCCESS) {
@@ -105,7 +123,8 @@ class HttpClientProcessor extends ClientProcessor {
   override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Result[E]]] = {
     val body: String = getBody(requestBody, "json")
     val p = Promise[Option[Result[E]]]()
-    client.request(HttpMethod.valueOf(method), s"http://$host:$port$path", new Handler[HttpClientResponse] {
+    val (tHost, tPort, tPath) = getUrlInfo(path)
+    client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (responseClass != null) {
           if (response.statusCode + "" != Code.SUCCESS) {
