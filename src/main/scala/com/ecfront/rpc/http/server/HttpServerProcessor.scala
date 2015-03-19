@@ -26,7 +26,9 @@ class HttpServerProcessor extends ServerProcessor {
       .requestHandler(new Handler[HttpServerRequest] {
       override def handle(request: HttpServerRequest): Unit = {
         val (fun, urlParameter) = router.getFunction(request.method().name(), request.path())
-        val contentType = request.headers().get("content-type").toLowerCase
+        val contentType = if (request.headers().contains("content-type"))
+          request.headers().get("content-type").toLowerCase
+        else "application/json; charset=UTF-8"
         if (fun != null) {
           request.params().entries().foreach {
             item =>
