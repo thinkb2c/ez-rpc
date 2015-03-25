@@ -44,9 +44,9 @@ class AkkaClientProcessor extends ClientProcessor {
   override protected[rpc] def processRaw[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (E) => Unit = null): Unit = {
     val parameter: Map[String, String] = getParameter(path)
     if (fun == null) {
-      actor ! AkkaRequest(method, path, parameter, requestBody)
+      actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
     } else {
-      val future = actor ? AkkaRequest(method, path, parameter, requestBody)
+      val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
       fun(Await.result(future, Duration.Inf).asInstanceOf[E])
     }
   }
@@ -55,10 +55,10 @@ class AkkaClientProcessor extends ClientProcessor {
     val p = Promise[Option[E]]()
     val parameter: Map[String, String] = getParameter(path)
     if (responseClass == null) {
-      actor ! AkkaRequest(method, path, parameter, requestBody)
+      actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
       p.success(null)
     } else {
-      val future = actor ? AkkaRequest(method, path, parameter, requestBody)
+      val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
       p.success(Some(Await.result(future, Duration.Inf).asInstanceOf[E]))
     }
     p.future
@@ -67,9 +67,9 @@ class AkkaClientProcessor extends ClientProcessor {
   override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Result[E]) => Unit = null): Unit = {
     val parameter: Map[String, String] = getParameter(path)
     if (fun == null) {
-      actor ! AkkaRequest(method, path, parameter, requestBody)
+      actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
     } else {
-      val future = actor ? AkkaRequest(method, path, parameter, requestBody)
+      val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
       fun(Await.result(future, Duration.Inf).asInstanceOf[Result[E]])
     }
   }
@@ -78,10 +78,10 @@ class AkkaClientProcessor extends ClientProcessor {
     val p = Promise[Option[Result[E]]]()
     val parameter: Map[String, String] = getParameter(path)
     if (responseClass == null) {
-      actor ! AkkaRequest(method, path, parameter, requestBody)
+      actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
       p.success(null)
     } else {
-      val future = actor ? AkkaRequest(method, path, parameter, requestBody)
+      val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
       p.success(Some(Await.result(future, Duration.Inf).asInstanceOf[Result[E]]))
     }
     p.future
@@ -105,5 +105,14 @@ class AkkaClientProcessor extends ClientProcessor {
     }
     parameter
   }
+
+  def removeParameter(path: String): String = {
+    if (path.contains("?")) {
+      path.substring(0, path.indexOf("?"))
+    } else {
+      path
+    }
+  }
+
 }
 

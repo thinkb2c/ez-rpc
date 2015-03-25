@@ -25,6 +25,7 @@ class FunSpec extends FunSuite {
         Result.success(true)
     }).get("/index/", {
       (param, _) =>
+        assert(param("a") == "1")
         Result.success("完成")
     }).post[String]("/index/", classOf[String], {
       (param, body) =>
@@ -58,7 +59,7 @@ class FunSpec extends FunSuite {
         assert(result.code == "200")
         assert(result.body)
         latch.countDown()
-    }).get[String]("/index/", classOf[String], {
+    }).get[String]("/index/?a=1", classOf[String], {
       result =>
         assert(result.code == "200")
         assert(result.body == "完成")
@@ -86,7 +87,7 @@ class FunSpec extends FunSuite {
 
     assert(client.getSync[Long]("/number/", classOf[Long]).get.body == 1L)
     assert(client.getSync[Boolean]("/boolean/", classOf[Boolean]).get.body)
-    assert(client.getSync[String]("/index/", classOf[String]).get.body == "完成")
+    assert(client.getSync[String]("/index/?a=1", classOf[String]).get.body == "完成")
     assert(client.postSync[String]("/index/", "测试", classOf[String]).get.body == "测试")
     assert(client.putSync[TestModel]("/index/test/", TestModel("测试"), classOf[TestModel]).get.body.name == "测试")
     client.putSync[TestModel]("/index/test/", TestModel("测试"))

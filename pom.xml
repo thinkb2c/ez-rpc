@@ -16,7 +16,7 @@
     <description>RPC模块</description>
     <url>https://github.com/gudaoxuri/ez-rpc</url>
     <packaging>jar</packaging>
-    <version>1.7</version>
+    <version>1.7.1</version>
 
     <scm>
         <connection>scm:git:git@github.com:gudaoxuri/ez-rpc.git</connection>
