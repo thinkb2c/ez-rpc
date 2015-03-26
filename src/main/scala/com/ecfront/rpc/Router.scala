@@ -67,9 +67,10 @@ private[rpc] class Router extends LazyLogging {
    * @param path 资源路径
    * @param requestClass 请求对象的类型
    * @param fun 业务方法
+   * @param flag 标识
    */
-  private[rpc] def add[E](method: String, path: String, requestClass: Class[E], fun: => (Map[String, String], E) => Any) {
-    logger.info("Register method [%s] path : %s".format(method, path))
+  private[rpc] def add[E](method: String, path: String, requestClass: Class[E], fun: => (Map[String, String], E) => Any, flag: String) {
+    logger.info(s"Register [$flag] method [$method] path : $path.")
     if (path.contains(":")) {
       //regular
       funContainerR.get(method).get += (Router.getRegex(path) -> Fun[E](requestClass, fun))

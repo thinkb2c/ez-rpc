@@ -16,7 +16,9 @@ class FunSpec extends FunSuite {
   def jsonFunTest(highPerformance: Boolean) {
     val latch = new CountDownLatch(6)
 
-    val server = RPC.server.setPort(808).setChannel(highPerformance).startup()
+    val server = RPC.server.setPort(808)
+    if (highPerformance) server.useHighPerformance()
+    server.startup()
       .get("/number/", {
       (param, _) =>
         Result.success(1L)
@@ -48,7 +50,9 @@ class FunSpec extends FunSuite {
          Result.success(files)
      })*/
 
-    val client = RPC.client.setPort(808).setChannel(highPerformance).startup()
+    val client = RPC.client.setPort(808)
+    if (highPerformance) client.useHighPerformance()
+    client.startup()
       .get[Long]("/number/", classOf[Long], {
       result =>
         assert(result.code == "200")
@@ -97,7 +101,7 @@ class FunSpec extends FunSuite {
   }
 
   def xmlFunTest(): Unit = {
-    val server = RPC.server.setPort(3001).setChannel(false).startup()
+    val server = RPC.server.setPort(3001).startup()
       .put[scala.xml.Node]("/custom/:id/", classOf[scala.xml.Node], {
       (param, body) =>
         assert((body \ "city").size != 0)
@@ -105,7 +109,7 @@ class FunSpec extends FunSuite {
     })
     //raw xml must channel=false and request class = scala.xml.Node
     val latch = new CountDownLatch(1)
-    val xmlClient = RPC.client.setPort(3001).setChannel(false).startup().raw
+    val xmlClient = RPC.client.setPort(3001).startup().raw
     xmlClient.get[scala.xml.Node]("http://flash.weather.com.cn:80/wmaps/xml/china.xml", classOf[scala.xml.Node], {
       result =>
         assert((result \ "city").size != 0)

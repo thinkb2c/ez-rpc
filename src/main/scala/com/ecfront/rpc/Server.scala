@@ -1,6 +1,7 @@
 package com.ecfront.rpc
 
 import com.ecfront.rpc.akka.server.AkkaServerProcessor
+import com.ecfront.rpc.autobuilding.AutoBuildingProcessor
 import com.ecfront.rpc.http.server.HttpServerProcessor
 import com.ecfront.rpc.process.ServerProcessor
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -15,15 +16,23 @@ class Server extends LazyLogging {
   private var port = 8080
   private var host = "0.0.0.0"
   private var processor: ServerProcessor = _
-  private var highPerformance = true
+  private var highPerformance = false
   private val router = new Router
 
+
+  def isHighPerformance: Boolean = {
+    highPerformance
+  }
+
+  def getChannel: String = {
+    if (highPerformance) "AKKA" else "HTTP"
+  }
+
   /**
-   * 设置服务通道，支持http及akka，http通道网络穿透性高，akka通道性能高，默认为true
-   * @param _highPerformance 是否启用高性能
+   * 设置服务通道，支持http及akka，http通道网络穿透性高，akka通道性能高，默认为false
    */
-  def setChannel(_highPerformance: Boolean) = {
-    highPerformance = _highPerformance
+  def useHighPerformance() = {
+    highPerformance = true
     this
   }
 
@@ -77,13 +86,25 @@ class Server extends LazyLogging {
   }
 
   /**
+   * 使用基于注解的自动构建，此方法必须在服务启动“startup”后才能调用
+   * @param instance 目标对象
+   * @param formatUrl 格式化URL
+   * @param preExecute 前置执行方法
+   * @param postExecute 后置执行方法
+   */
+  def autoBuilding(instance: AnyRef, formatUrl: => String => String = { String => String }, preExecute: => (Map[String, String], Any) => Boolean = { (parameter, body) => true }, postExecute: => Any => Any = { Any => Any }) = {
+    AutoBuildingProcessor.process(this, instance, formatUrl, preExecute, postExecute)
+    this
+  }
+
+  /**
    * 注册添加资源的方法
    * @param path 资源路径
    * @param requestClass 请求对象的类型
    * @param function 业务方法
    */
   def post[E](path: String, requestClass: Class[E], function: (Map[String, String], E) => Any) = {
-    router.add("POST", path, requestClass, function)
+    router.add("POST", path, requestClass, function, getChannel)
     this
   }
 
@@ -94,7 +115,7 @@ class Server extends LazyLogging {
    * @param function 业务方法
    */
   def put[E](path: String, requestClass: Class[E], function: => (Map[String, String], E) => Any) = {
-    router.add("PUT", path, requestClass, function)
+    router.add("PUT", path, requestClass, function, getChannel)
     this
   }
 
@@ -105,7 +126,7 @@ class Server extends LazyLogging {
    * @param function 业务方法
    */
   def delete(path: String, function: => (Map[String, String], Void) => Any) = {
-    router.add("DELETE", path, classOf[Void], function)
+    router.add("DELETE", path, classOf[Void], function, getChannel)
     this
   }
 
@@ -116,7 +137,7 @@ class Server extends LazyLogging {
    * @param function 业务方法
    */
   def get(path: String, function: => (Map[String, String], Void) => Any) = {
-    router.add("GET", path, classOf[Void], function)
+    router.add("GET", path, classOf[Void], function, getChannel)
     this
   }
 
@@ -131,7 +152,7 @@ class Server extends LazyLogging {
      * @param function 业务方法
      */
     def post(path: String, requestClass: Class[_], function: (Map[String, String], Any) => Any) = {
-      router.add("POST", path, requestClass, function)
+      router.add("POST", path, requestClass, function, getChannel)
       this
     }
 
@@ -142,7 +163,7 @@ class Server extends LazyLogging {
      * @param function 业务方法
      */
     def put(path: String, requestClass: Class[_], function: => (Map[String, String], Any) => Any) = {
-      router.add("PUT", path, requestClass, function)
+      router.add("PUT", path, requestClass, function, getChannel)
       this
     }
 
@@ -153,7 +174,7 @@ class Server extends LazyLogging {
      * @param function 业务方法
      */
     def delete(path: String, function: => (Map[String, String], Void) => Any) = {
-      router.add("DELETE", path, classOf[Void], function)
+      router.add("DELETE", path, classOf[Void], function, getChannel)
       this
     }
 
@@ -164,7 +185,7 @@ class Server extends LazyLogging {
      * @param function 业务方法
      */
     def get(path: String, function: => (Map[String, String], Void) => Any) = {
-      router.add("GET", path, classOf[Void], function)
+      router.add("GET", path, classOf[Void], function, getChannel)
       this
     }
   }

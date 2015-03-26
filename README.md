@@ -12,6 +12,7 @@ EZ RPC
 1. 支持启动多个RPC服务（@see MultiSpec）
 1. 类库形式，侵入性低，集成友好
 1. 支持链式编程风格，使用方便
+1. 支持基于注解的服务注册
 1. client支持异步与同步模式
 1. 支持Json（推荐Json格式）与Xml
 
@@ -20,7 +21,7 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-rpc</artifactId>
-        <version>1.7.1</version>
+        <version>1.9.0</version>
     </dependency>
 
 ###开启RPC服务
@@ -32,6 +33,23 @@ EZ RPC
     ).shutdown()
 
 *使用xml格式时需要setChannel(false)，<请求数据类型>为`scala.xml.Node`*
+
+###使用注解注册服务
+
+    RPC.server.startup().autoBuilding(<带注解的对象1>,<url格式化方法(可选)>,<前置执行方法(可选)>,<后置执行方法(可选)>).autoBuilding(<带注解的对象...>).shutdown()
+
+    注解与方法形参要求：
+    get(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String]): Any
+    post(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], req: Any): Any
+    put(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], req: Any): Any
+    delete(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String]): Any
+  
+####注意
+1. 确保注解方法不存在形参数量相同的方法重载
+1. post与put方法两个形参如为scala内置类型则需要用全路径做为类型名，如`req scala.collection.immutable.Map[String, Any]`
+
+*详见 AutoBuildingSpec.scala*
+    
 
 ###访问RPC服务（异步）
 
@@ -51,7 +69,7 @@ EZ RPC
 
 *  端口：`RPC.<server|client>.setPort(<端口，默认8080>)`
 *  主机：`RPC.<server|client>.setHost(<主机，默认0.0.0.0>)`
-*  通道（HTTP或Akka）：`RPC.<server|client>.setChannel(<true|false，true为Akka通道，false为HTTP通道，默认为true>)`
+*  通道（HTTP或AKKA，默认为HTTP）：`使用akka通道：RPC.<server|client>.useHighPerformance()`
 
 ##示例（更多示例见测试代码）
 

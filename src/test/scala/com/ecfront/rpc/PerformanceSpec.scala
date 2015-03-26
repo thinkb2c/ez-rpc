@@ -14,13 +14,17 @@ class PerformanceSpec extends FunSuite {
   }
 
   def perfTest(highPerformance: Boolean) {
-    val server = RPC.server.setChannel(highPerformance).startup().put[TestModel]("/index/:id/", classOf[TestModel], {
+    val server = RPC.server.setPort(808)
+    if (highPerformance) server.useHighPerformance()
+    server.startup()
+      .put[TestModel]("/index/:id/", classOf[TestModel], {
       (param, body) =>
         Result.success(body)
     })
 
-    val client = RPC.client.setChannel(highPerformance).startup()
-
+    val client = RPC.client.setPort(808)
+    if (highPerformance) client.useHighPerformance()
+    client.startup()
     val latch = new CountDownLatch(5000)
     val start = System.currentTimeMillis()
     for (i <- 0 to 5000) {

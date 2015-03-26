@@ -18,14 +18,13 @@ class Client extends LazyLogging {
   private var port = 8080
   private var host = "0.0.0.0"
   private var processor: ClientProcessor = _
-  private var highPerformance = true
+  private var highPerformance = false
 
   /**
    * 设置服务通道，支持http及akka，http通道网络穿透性高，akka通道性能高，默认为true
-   * @param _highPerformance 是否启用高性能
    */
-  def setChannel(_highPerformance: Boolean) = {
-    highPerformance = _highPerformance
+  def useHighPerformance() = {
+    highPerformance = true
     this
   }
 
