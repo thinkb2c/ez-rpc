@@ -21,35 +21,40 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-rpc</artifactId>
-        <version>1.9.1</version>
+        <version>1.9.5</version>
     </dependency>
 
 ###开启RPC服务
 
     RPC.server.startup().<get|post|put|delete>[<请求数据类型>](<URI>, [<请求数据类型>] , {
-        (parameter, body) =>
+        (parameter, body,inject) =>
             <业务方法>
         }
     ).shutdown()
+    
+业务处理方法参数：
+> parameter: Map[String, String] 为请求参数，来自url正则（如 /test/:id/）及path （如 /?token=1111）
+> body: Any 为请求主体，只存在于POST与PUT方法中
+> inject:Any 为前置执行方法返回的对象
 
 *使用xml格式时需要setChannel(false)，<请求数据类型>为`scala.xml.Node`*
 
 ###使用注解注册服务
 
-    RPC.server.startup().autoBuilding(<带注解的对象1>,<url格式化方法(可选)>,<前置执行方法(可选)>,<后置执行方法(可选)>).autoBuilding(<带注解的对象...>).shutdown()
+    RPC.server.startup().autoBuilding(<带注解的对象1>).autoBuilding(<带注解的对象...>).shutdown()
 
-    注解与方法形参要求：
-    get(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String]): Any
-    post(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], req: Any): Any
-    put(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], req: Any): Any
-    delete(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String]): Any
-  
+注解与方法形参要求：
+
+* get(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String],inject:Any): Any
+* post(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], body: Any,inject:Any): Any
+* put(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String], body: Any,inject:Any): Any
+* delete(uri,是否使用http通道,是否使用akka通道) 对应的方法签名为 def method(parameter: Map[String, String],inject:Any): Any
+    
 ####注意
 1. 确保注解方法不存在形参数量相同的方法重载
 1. post与put方法两个形参如为scala内置类型则需要用全路径做为类型名，如`req scala.collection.immutable.Map[String, Any]`
 
 *详见 AutoBuildingSpec.scala*
-    
 
 ###访问RPC服务（异步）
 
@@ -67,9 +72,12 @@ EZ RPC
 
 ###参数设置
 
-*  端口：`RPC.<server|client>.setPort(<端口，默认8080>)`
-*  主机：`RPC.<server|client>.setHost(<主机，默认0.0.0.0>)`
-*  通道（HTTP或AKKA，默认为HTTP）：`使用akka通道：RPC.<server|client>.useHighPerformance()`
+* 端口：`RPC.<server|client>.setPort(<端口，默认8080>)`
+* 主机：`RPC.<server|client>.setHost(<主机，默认0.0.0.0>)`
+* 通道（HTTP或AKKA，默认为HTTP）：`使用akka通道：RPC.<server|client>.useHighPerformance()`
+* 格式化URL : `RPC.setFormatUrl(<String => String>)` 
+* 前置执行方法 : `RPC.setPreExecute(<method,url,parameters => Resp[Any]>)` ，仅当返回code="200"时才会往下执行，反之直接返回结果，可用于权限认证
+* 后置执行方法 :  `RPC.setPostExecute(<Any =>  Any>)` ，在主体方法执行完成后执行
 
 ##示例（更多示例见测试代码）
 

@@ -16,7 +16,7 @@ class RobustSpec extends FunSuite {
     val latch = new CountDownLatch(100)
     val server = RPC.server.setPort(808).useHighPerformance().startup()
       .post[String]("/index/", classOf[String], {
-      (param, body) =>
+      (param, body, _) =>
         latch.countDown()
         new Exception("error")
     })

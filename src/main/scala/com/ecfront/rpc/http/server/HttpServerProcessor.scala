@@ -2,7 +2,7 @@ package com.ecfront.rpc.http.server
 
 import java.util.concurrent.CountDownLatch
 
-import com.ecfront.common.{JsonHelper, Resp}
+import com.ecfront.common.JsonHelper
 import com.ecfront.rpc.Fun
 import com.ecfront.rpc.process.ServerProcessor
 import io.vertx.core._
@@ -25,14 +25,15 @@ class HttpServerProcessor extends ServerProcessor {
       .requestHandler(new Handler[HttpServerRequest] {
       override def handle(request: HttpServerRequest): Unit = {
         if (request.path() != "/favicon.ico") {
-          val (fun, urlParameter) = router.getFunction(request.method().name(), request.path())
           val contentType =
             if (request.headers().contains("content-type")) request.headers().get("content-type").toLowerCase else "application/json; charset=UTF-8"
-          if (fun != null) {
-            request.params().entries().foreach {
-              item =>
-                urlParameter += (item.getKey -> item.getValue)
-            }
+          val urlParameter = collection.mutable.Map[String, String]()
+          request.params().entries().foreach {
+            item =>
+              urlParameter += (item.getKey -> item.getValue)
+          }
+          val (preResult, fun, postFun) = router.getFunction(request.method().name(), request.path(), urlParameter)
+          if (preResult) {
             if (request.method().name() == "POST" || request.method().name() == "PUT") {
               request.bodyHandler(new Handler[Buffer] {
                 override def handle(data: Buffer): Unit = {
@@ -41,15 +42,14 @@ class HttpServerProcessor extends ServerProcessor {
                     case t if t.contains("xml") => scala.xml.XML.loadString(data.getString(0, data.length))
                     case _ => logger.error("Not support content type:" + contentType)
                   }
-                  execute(urlParameter.toMap, body, fun, request.response(), contentType)
+                  execute(urlParameter.toMap, body, preResult.body, fun, postFun, request.response(), contentType)
                 }
               })
             } else {
-              execute(urlParameter.toMap, null, fun, request.response(), contentType)
+              execute(urlParameter.toMap, null, preResult.body, fun, postFun, request.response(), contentType)
             }
           } else {
-            logger.warn("Not implemented: [ %s ] %s".format(request.method().name(), request.path()))
-            returnContent(Resp.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
+            returnContent(preResult, request.response(), contentType)
           }
         }
       }
@@ -79,10 +79,10 @@ class HttpServerProcessor extends ServerProcessor {
     latch.await()
   }
 
-  private def execute(parameter: Map[String, String], body: Any, fun: Fun[_], response: HttpServerResponse, contentType: String) {
+  private def execute(parameter: Map[String, String], body: Any, preData: Any, fun: Fun[_], postFun: => Any => Any, response: HttpServerResponse, contentType: String) {
     vertx.executeBlocking(new Handler[Future[Any]] {
       override def handle(future: Future[Any]): Unit = {
-        future.complete(fun.execute(parameter, body))
+        future.complete(postFun(fun.execute(parameter, body, preData)))
       }
     }, new Handler[AsyncResult[Any]] {
       override def handle(result: AsyncResult[Any]): Unit = {

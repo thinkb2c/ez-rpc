@@ -9,23 +9,23 @@ class MultiSpec extends FunSuite {
 
   test("多服务测试") {
     RPC.server.setPort(8001).startup().get("/test/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success("OK1")
     })
     RPC.server.setPort(8002).startup().get("/test/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success("OK2")
     })
     RPC.server.useHighPerformance().setPort(8003).startup().get("/test/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success("OK3")
     })
     RPC.server.useHighPerformance().setPort(8004).startup().get("/test/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success("OK4")
     })
     RPC.server.useHighPerformance().setPort(8005).startup().get("/test/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success("OK5")
     })
     val latch = new CountDownLatch(6)

@@ -2,6 +2,7 @@ package com.ecfront.rpc
 
 import java.util.regex.Pattern
 
+import com.ecfront.common.Resp
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scala.collection.mutable
@@ -11,9 +12,9 @@ import scala.collection.mutable
  * @param requestClass 请求对象的类型
  * @param fun 业务方法
  */
-case class Fun[E](requestClass: Class[E], private val fun: (Map[String, String], E) => Any) {
-  private[rpc] def execute(parameters: Map[String, String], body: Any): Any = {
-    fun(parameters, body.asInstanceOf[E])
+case class Fun[E](requestClass: Class[E], private val fun: (Map[String, String], E, Any) => Any) {
+  private[rpc] def execute(parameters: Map[String, String], body: Any, inject: Any): Any = {
+    fun(parameters, body.asInstanceOf[E], inject)
   }
 }
 
@@ -23,17 +24,19 @@ case class Fun[E](requestClass: Class[E], private val fun: (Map[String, String],
 private[rpc] class Router extends LazyLogging {
 
   //业务方法容器，非正则
-  private val funContainer = collection.mutable.Map[String, collection.mutable.Map[String, Fun[_]]]()
-  funContainer += ("POST" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("GET" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("DELETE" -> collection.mutable.Map[String, Fun[_]]())
-  funContainer += ("PUT" -> collection.mutable.Map[String, Fun[_]]())
+  private val funContainer = collection.mutable.Map[String, collection.mutable.Map[String, (Fun[_], Server)]]()
+  funContainer += ("POST" -> collection.mutable.Map[String, (Fun[_], Server)]())
+  funContainer += ("GET" -> collection.mutable.Map[String, (Fun[_], Server)]())
+  funContainer += ("DELETE" -> collection.mutable.Map[String, (Fun[_], Server)]())
+  funContainer += ("PUT" -> collection.mutable.Map[String, (Fun[_], Server)]())
   //业务方法容器，正则
-  private val funContainerR = collection.mutable.Map[String, mutable.Buffer[((Pattern, Seq[String]), Fun[_])]]()
-  funContainerR += ("POST" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("GET" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("DELETE" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
-  funContainerR += ("PUT" -> mutable.Buffer[((Pattern, Seq[String]), Fun[_])]())
+  private val funContainerR = collection.mutable.Map[String, mutable.Buffer[((Pattern, Seq[String]), (Fun[_], Server))]]()
+  funContainerR += ("POST" -> mutable.Buffer[((Pattern, Seq[String]), (Fun[_], Server))]())
+  funContainerR += ("GET" -> mutable.Buffer[((Pattern, Seq[String]), (Fun[_], Server))]())
+  funContainerR += ("DELETE" -> mutable.Buffer[((Pattern, Seq[String]), (Fun[_], Server))]())
+  funContainerR += ("PUT" -> mutable.Buffer[((Pattern, Seq[String]), (Fun[_], Server))]())
+  //正则转换前后的映射，如 ^/base/test2/(?<id>[^/]+)/$ -> /base/test2/:id/
+  private val containerOriginalR = collection.mutable.Map[String, String]()
 
 
   /**
@@ -41,23 +44,35 @@ private[rpc] class Router extends LazyLogging {
    * @param method 资源操作方式
    * @param path 资源路径
    */
-  private[rpc] def getFunction(method: String, path: String): (Fun[_], collection.mutable.Map[String, String]) = {
-    val parameters = collection.mutable.Map[String, String]()
-    var res = funContainer.get(method.toUpperCase).get.get(path).orNull
-    if (res == null) {
+  private[rpc] def getFunction(method: String, path: String, parameters: collection.mutable.Map[String, String]): (Resp[Any], Fun[_], Any => Any) = {
+    var urlTemplate: String = path
+    var fun: Fun[_] = null
+    var server: Server = null
+    val r = funContainer.get(method.toUpperCase).get.get(path).orNull
+    if (r == null) {
       funContainerR.get(method).get.foreach {
         item =>
           val matcher = item._1._1.matcher(path)
           if (matcher.matches()) {
-            res = item._2
+            urlTemplate = containerOriginalR(item._1._1.pattern())
+            fun = item._2._1
+            server = item._2._2
             item._1._2.foreach(name => parameters += (name -> matcher.group(name)))
           }
       }
-    }
-    if (res == null) {
-      (null, parameters)
     } else {
-      (res, parameters)
+      fun = r._1
+      server = r._2
+    }
+    if (server != null) {
+      val result = server.preExecute(method, urlTemplate, parameters.toMap)
+      if (result) {
+        (result, fun, server.postExecute)
+      } else {
+        (Resp.fail(result.code, result.message), null, null)
+      }
+    } else {
+      (Resp.notImplemented("[ %s ] %s".format(method, path)), null, null)
     }
   }
 
@@ -67,20 +82,24 @@ private[rpc] class Router extends LazyLogging {
    * @param path 资源路径
    * @param requestClass 请求对象的类型
    * @param fun 业务方法
-   * @param flag 标识
+   * @param server server对象
    */
-  private[rpc] def add[E](method: String, path: String, requestClass: Class[E], fun: => (Map[String, String], E) => Any, flag: String) {
-    logger.info(s"Register [$flag] method [$method] path : $path.")
-    if (path.contains(":")) {
+  private[rpc] def add[E](method: String, path: String, requestClass: Class[E], fun: => (Map[String, String], E, Any) => Any, server: Server) {
+    val nPath = server.formatUrl(path)
+    logger.info(s"Register [${server.getChannel}] method [$method] path : $nPath.")
+    if (nPath.contains(":")) {
       //regular
-      funContainerR.get(method).get += (Router.getRegex(path) -> Fun[E](requestClass, fun))
+      val r = Router.getRegex(nPath)
+      containerOriginalR += r._1.pattern() -> nPath
+      funContainerR.get(method).get += (r ->(Fun[E](requestClass, fun), server))
     } else {
-      funContainer.get(method).get += (path -> Fun[E](requestClass, fun))
+      funContainer.get(method).get += (nPath ->(Fun[E](requestClass, fun), server))
     }
   }
 }
 
 object Router {
+
   private def getRegex(path: String): (Pattern, Seq[String]) = {
     var pathR = path
     var named = mutable.Buffer[String]()
@@ -92,4 +111,5 @@ object Router {
     }
     (Pattern.compile("^" + pathR + "$"), named)
   }
+
 }

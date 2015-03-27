@@ -20,25 +20,25 @@ class FunSpec extends FunSuite {
     if (highPerformance) server.useHighPerformance()
     server.startup()
       .get("/number/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success(1L)
     }).get("/boolean/", {
-      (param, _) =>
+      (param, _, _) =>
         Resp.success(true)
     }).get("/index/", {
-      (param, _) =>
+      (param, _, _) =>
         assert(param("a") == "1")
         Resp.success("完成")
     }).post[String]("/index/", classOf[String], {
-      (param, body) =>
+      (param, body, _) =>
         Resp.success(body)
     }).put[TestModel]("/index/:id/", classOf[TestModel], {
-      (param, body) =>
+      (param, body, _) =>
         assert(body.name == "测试")
         assert(param.get("id").get == "test")
         Resp.success(body)
     }).put[TestModel]("/custom/:id/", classOf[TestModel], {
-      (param, body) =>
+      (param, body, _) =>
         assert(body.name == "测试")
         assert(param.get("id").get == "test")
         //Result custom type
@@ -103,7 +103,7 @@ class FunSpec extends FunSuite {
   def xmlFunTest(): Unit = {
     val server = RPC.server.setPort(3001).startup()
       .put[scala.xml.Node]("/custom/:id/", classOf[scala.xml.Node], {
-      (param, body) =>
+      (param, body, _) =>
         assert((body \ "city").size != 0)
         body
     })

@@ -18,7 +18,7 @@ class PerformanceSpec extends FunSuite {
     if (highPerformance) server.useHighPerformance()
     server.startup()
       .put[TestModel]("/index/:id/", classOf[TestModel], {
-      (param, body) =>
+      (param, body, _) =>
         Resp.success(body)
     })
 

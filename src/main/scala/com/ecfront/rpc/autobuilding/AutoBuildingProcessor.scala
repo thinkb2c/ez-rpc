@@ -6,56 +6,52 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object AutoBuildingProcessor extends LazyLogging {
 
-  def process(server: Server, instance: AnyRef, formatUrl: => (String) => String, preExecute: => (Map[String, String], Any) => Boolean, postExecute: => (Any) => Any) = {
+  def process(server: Server, instance: AnyRef) = {
     BeanHelper.findMethodAnnotations(instance.getClass, Seq(classOf[get], classOf[post], classOf[put], classOf[delete])).foreach {
       methodInfo =>
         val methodMirror = BeanHelper.invoke(instance, methodInfo.method)
         methodInfo.annotation match {
           case ann: get if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
-            server.reflect.get(formatUrl(ann.uri), {
-              (param, _) =>
+            server.reflect.get(ann.uri, {
+              (param, _, inject) =>
                 try {
-                  if (preExecute(param, null)) {
-                    postExecute(methodMirror(param))
-                  }
+                  methodMirror(param, inject)
                 } catch {
                   case e: Exception =>
+                    logger.error("Occurred unchecked exception.", e)
                     Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: post if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
-            server.reflect.post(formatUrl(ann.uri), getClassFromMethodInfo(methodInfo), {
-              (param, body) =>
+            server.reflect.post(ann.uri, getClassFromMethodInfo(methodInfo), {
+              (param, body, inject) =>
                 try {
-                  if (preExecute(param, body)) {
-                    postExecute(methodMirror(param, body))
-                  }
+                  methodMirror(param, body, inject)
                 } catch {
                   case e: Exception =>
+                    logger.error("Occurred unchecked exception.", e)
                     Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: put if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
-            server.reflect.put(formatUrl(ann.uri), getClassFromMethodInfo(methodInfo), {
-              (param, body) =>
+            server.reflect.put(ann.uri, getClassFromMethodInfo(methodInfo), {
+              (param, body, inject) =>
                 try {
-                  if (preExecute(param, body)) {
-                    postExecute(methodMirror(param, body))
-                  }
+                  methodMirror(param, body, inject)
                 } catch {
                   case e: Exception =>
+                    logger.error("Occurred unchecked exception.", e)
                     Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: delete if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
-            server.reflect.delete(formatUrl(ann.uri), {
-              (param, _) =>
+            server.reflect.delete(ann.uri, {
+              (param, _, inject) =>
                 try {
-                  if (preExecute(param, null)) {
-                    postExecute(methodMirror(param))
-                  }
+                  methodMirror(param, inject)
                 } catch {
                   case e: Exception =>
+                    logger.error("Occurred unchecked exception.", e)
                     Resp.serverError("Occurred unchecked exception.")
                 }
             })

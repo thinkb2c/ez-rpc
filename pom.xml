@@ -16,7 +16,7 @@
     <description>RPC模块</description>
     <url>https://github.com/gudaoxuri/ez-rpc</url>
     <packaging>jar</packaging>
-    <version>1.9.1</version>
+    <version>1.9.5</version>
 
     <scm>
         <connection>scm:git:git@github.com:gudaoxuri/ez-rpc.git</connection>
@@ -25,7 +25,7 @@
     </scm>
 
     <properties>
-        <ez-common.version>0.4.1</ez-common.version>
+        <ez-common.version>0.4.2</ez-common.version>
         <scala-xml.version>1.0.3</scala-xml.version>
         <vertx.version>3.0.0-milestone3</vertx.version>
         <akka.version>2.3.9</akka.version>

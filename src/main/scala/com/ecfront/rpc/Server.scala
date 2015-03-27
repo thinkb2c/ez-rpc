@@ -1,5 +1,6 @@
 package com.ecfront.rpc
 
+import com.ecfront.common.Resp
 import com.ecfront.rpc.akka.server.AkkaServerProcessor
 import com.ecfront.rpc.autobuilding.AutoBuildingProcessor
 import com.ecfront.rpc.http.server.HttpServerProcessor
@@ -18,7 +19,9 @@ class Server extends LazyLogging {
   private var processor: ServerProcessor = _
   private var highPerformance = false
   private val router = new Router
-
+  private[rpc] var preExecute: (String, String, Map[String, String]) => Resp[Any] = { (method, url, parameter) => Resp.success(null) }
+  private[rpc] var postExecute: Any => Any = { obj => obj }
+  private[rpc] var formatUrl: String => String = { String => String }
 
   def isHighPerformance: Boolean = {
     highPerformance
@@ -64,6 +67,33 @@ class Server extends LazyLogging {
   }
 
   /**
+   * 格式化URL
+   * @param _formatUrl  ( source url => dest url )
+   */
+  def setFormatUrl(_formatUrl: => String => String) = {
+    formatUrl = _formatUrl
+    this
+  }
+
+  /**
+   * 设置前置执行方法
+   * @param _preExecute ( method,url,parameters => Resp[Any] )
+   */
+  def setPreExecute(_preExecute: => (String, String, Map[String, String]) => Resp[Any]) = {
+    preExecute = _preExecute
+    this
+  }
+
+  /**
+   * 设置后置执行方法
+   * @param _postExecute  ( any obj =>  any obj )
+   */
+  def setPostExecute(_postExecute: => Any => Any) = {
+    postExecute = _postExecute
+    this
+  }
+
+  /**
    * 启动服务
    */
   def startup(): Server = {
@@ -88,12 +118,9 @@ class Server extends LazyLogging {
   /**
    * 使用基于注解的自动构建，此方法必须在服务启动“startup”后才能调用
    * @param instance 目标对象
-   * @param formatUrl 格式化URL
-   * @param preExecute 前置执行方法
-   * @param postExecute 后置执行方法
    */
-  def autoBuilding(instance: AnyRef, formatUrl: => String => String = { String => String }, preExecute: => (Map[String, String], Any) => Boolean = { (parameter, body) => true }, postExecute: => Any => Any = { Any => Any }) = {
-    AutoBuildingProcessor.process(this, instance, formatUrl, preExecute, postExecute)
+  def autoBuilding(instance: AnyRef) = {
+    AutoBuildingProcessor.process(this, instance)
     this
   }
 
@@ -103,8 +130,8 @@ class Server extends LazyLogging {
    * @param requestClass 请求对象的类型
    * @param function 业务方法
    */
-  def post[E](path: String, requestClass: Class[E], function: (Map[String, String], E) => Any) = {
-    router.add("POST", path, requestClass, function, getChannel)
+  def post[E](path: String, requestClass: Class[E], function: (Map[String, String], E, Any) => Any) = {
+    router.add(Method.POST, path, requestClass, function, this)
     this
   }
 
@@ -114,8 +141,8 @@ class Server extends LazyLogging {
    * @param requestClass 请求对象的类型
    * @param function 业务方法
    */
-  def put[E](path: String, requestClass: Class[E], function: => (Map[String, String], E) => Any) = {
-    router.add("PUT", path, requestClass, function, getChannel)
+  def put[E](path: String, requestClass: Class[E], function: => (Map[String, String], E, Any) => Any) = {
+    router.add(Method.PUT, path, requestClass, function, this)
     this
   }
 
@@ -125,8 +152,8 @@ class Server extends LazyLogging {
    * @param path 资源路径
    * @param function 业务方法
    */
-  def delete(path: String, function: => (Map[String, String], Void) => Any) = {
-    router.add("DELETE", path, classOf[Void], function, getChannel)
+  def delete(path: String, function: => (Map[String, String], Void, Any) => Any) = {
+    router.add(Method.DELETE, path, classOf[Void], function, this)
     this
   }
 
@@ -136,10 +163,12 @@ class Server extends LazyLogging {
    * @param path 资源路径
    * @param function 业务方法
    */
-  def get(path: String, function: => (Map[String, String], Void) => Any) = {
-    router.add("GET", path, classOf[Void], function, getChannel)
+  def get(path: String, function: => (Map[String, String], Void, Any) => Any) = {
+    router.add(Method.GET, path, classOf[Void], function, this)
     this
   }
+
+  val server = this
 
   /**
    * 反射调用，反射时避免类型type处理
@@ -151,8 +180,8 @@ class Server extends LazyLogging {
      * @param requestClass 请求对象的类型
      * @param function 业务方法
      */
-    def post(path: String, requestClass: Class[_], function: (Map[String, String], Any) => Any) = {
-      router.add("POST", path, requestClass, function, getChannel)
+    def post(path: String, requestClass: Class[_], function: (Map[String, String], Any, Any) => Any) = {
+      router.add(Method.POST, path, requestClass, function, server)
       this
     }
 
@@ -162,8 +191,8 @@ class Server extends LazyLogging {
      * @param requestClass 请求对象的类型
      * @param function 业务方法
      */
-    def put(path: String, requestClass: Class[_], function: => (Map[String, String], Any) => Any) = {
-      router.add("PUT", path, requestClass, function, getChannel)
+    def put(path: String, requestClass: Class[_], function: => (Map[String, String], Any, Any) => Any) = {
+      router.add(Method.PUT, path, requestClass, function, server)
       this
     }
 
@@ -173,8 +202,8 @@ class Server extends LazyLogging {
      * @param path 资源路径
      * @param function 业务方法
      */
-    def delete(path: String, function: => (Map[String, String], Void) => Any) = {
-      router.add("DELETE", path, classOf[Void], function, getChannel)
+    def delete(path: String, function: => (Map[String, String], Void, Any) => Any) = {
+      router.add(Method.DELETE, path, classOf[Void], function, server)
       this
     }
 
@@ -184,8 +213,8 @@ class Server extends LazyLogging {
      * @param path 资源路径
      * @param function 业务方法
      */
-    def get(path: String, function: => (Map[String, String], Void) => Any) = {
-      router.add("GET", path, classOf[Void], function, getChannel)
+    def get(path: String, function: => (Map[String, String], Void, Any) => Any) = {
+      router.add(Method.GET, path, classOf[Void], function, server)
       this
     }
   }

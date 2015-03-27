@@ -1,7 +1,6 @@
 package com.ecfront.rpc.akka.server
 
 import akka.actor.{Actor, Props}
-import com.ecfront.common.Resp
 import com.ecfront.rpc.Router
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
@@ -12,15 +11,16 @@ class AkkaActor(router: Router) extends Actor with LazyLogging {
 
   def receive = {
     case AkkaRequest(method, path, parameter, body) =>
-      val (fun, urlParameter) = router.getFunction(method, path)
-      if (fun != null) {
-        parameter.foreach {
-          item =>
-            urlParameter += (item._1 -> item._2)
-        }
-        sender() ! fun.execute(urlParameter.toMap, body)
+      val urlParameter = collection.mutable.Map[String, String]()
+      parameter.foreach {
+        item =>
+          urlParameter += (item._1 -> item._2)
+      }
+      val (preResult, fun, postFun) = router.getFunction(method, path, urlParameter)
+      if (preResult) {
+        sender() ! postFun(fun.execute(urlParameter.toMap, body, preResult.body))
       } else {
-        sender() ! Resp.notImplemented("[ %s ] %s".format(method, path))
+        sender() ! preResult
       }
   }
 

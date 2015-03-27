@@ -67,7 +67,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def get[E](path: String, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
-    processor.process[E]("GET", path, null, responseClass, fun)
+    processor.process[E](Method.GET, path, null, responseClass, fun)
     this
   }
 
@@ -78,7 +78,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def getSync[E](path: String, responseClass: Class[E] = null): Option[Resp[E]] = {
-    Await.result(processor.process[E]("GET", path, null, responseClass), Duration.Inf)
+    Await.result(processor.process[E](Method.GET, path, null, responseClass), Duration.Inf)
   }
 
   /**
@@ -89,7 +89,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def delete[E](path: String, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
-    processor.process[E]("DELETE", path, null, responseClass, fun)
+    processor.process[E](Method.DELETE, path, null, responseClass, fun)
     this
   }
 
@@ -100,7 +100,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def deleteSync[E](path: String, responseClass: Class[E] = null): Option[Resp[E]] = {
-    Await.result(processor.process[E]("DELETE", path, null, responseClass), Duration.Inf)
+    Await.result(processor.process[E](Method.DELETE, path, null, responseClass), Duration.Inf)
   }
 
   /**
@@ -112,7 +112,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def post[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
-    processor.process[E]("POST", path, data, responseClass, fun)
+    processor.process[E](Method.POST, path, data, responseClass, fun)
     this
   }
 
@@ -124,7 +124,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Resp[E]] = {
-    Await.result(processor.process[E]("POST", path, data, responseClass), Duration.Inf)
+    Await.result(processor.process[E](Method.POST, path, data, responseClass), Duration.Inf)
   }
 
   /**
@@ -136,7 +136,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
-    processor.process[E]("PUT", path, data, responseClass, fun)
+    processor.process[E](Method.PUT, path, data, responseClass, fun)
     this
   }
 
@@ -148,7 +148,7 @@ class Client extends LazyLogging {
    * @return Result包装对象
    */
   def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Resp[E]] = {
-    Await.result(processor.process[E]("PUT", path, data, responseClass), Duration.Inf)
+    Await.result(processor.process[E](Method.PUT, path, data, responseClass), Duration.Inf)
   }
 
   /**
@@ -166,7 +166,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def get[E](path: String, responseClass: Class[E] = null, fun: => E => Unit = null) = {
-      processor.processRaw[E]("GET", path, "", responseClass, fun)
+      processor.processRaw[E](Method.GET, path, "", responseClass, fun)
       this
     }
 
@@ -177,7 +177,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def getSync[E](path: String, responseClass: Class[E] = null): Option[E] = {
-      Await.result(processor.processRaw[E]("GET", path, "", responseClass), Duration.Inf)
+      Await.result(processor.processRaw[E](Method.GET, path, "", responseClass), Duration.Inf)
     }
 
     /**
@@ -188,7 +188,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def delete[E](path: String, responseClass: Class[E] = null, fun: => E => Unit = null) = {
-      processor.processRaw[E]("DELETE", path, "", responseClass, fun)
+      processor.processRaw[E](Method.DELETE, path, "", responseClass, fun)
       this
     }
 
@@ -199,7 +199,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def deleteSync[E](path: String, responseClass: Class[E] = null): Option[E] = {
-      Await.result(processor.processRaw[E]("DELETE", path, "", responseClass), Duration.Inf)
+      Await.result(processor.processRaw[E](Method.DELETE, path, "", responseClass), Duration.Inf)
     }
 
     /**
@@ -211,7 +211,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def post[E](path: String, data: Any, responseClass: Class[E] = null, fun: => E => Unit = null) = {
-      processor.processRaw[E]("POST", path, data, responseClass, fun)
+      processor.processRaw[E](Method.POST, path, data, responseClass, fun)
       this
     }
 
@@ -223,7 +223,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[E] = {
-      Await.result(processor.processRaw[E]("POST", path, data, responseClass), Duration.Inf)
+      Await.result(processor.processRaw[E](Method.POST, path, data, responseClass), Duration.Inf)
     }
 
     /**
@@ -235,7 +235,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => E => Unit = null) = {
-      processor.processRaw[E]("PUT", path, data, responseClass, fun)
+      processor.processRaw[E](Method.PUT, path, data, responseClass, fun)
       this
     }
 
@@ -247,7 +247,7 @@ class Client extends LazyLogging {
      * @return 原生对象
      */
     def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[E] = {
-      Await.result(processor.processRaw[E]("PUT", path, data, responseClass), Duration.Inf)
+      Await.result(processor.processRaw[E](Method.PUT, path, data, responseClass), Duration.Inf)
     }
   }
 
