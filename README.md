@@ -21,7 +21,7 @@ EZ RPC
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-rpc</artifactId>
-        <version>1.9.</version>
+        <version>1.9.1</version>
     </dependency>
 
 ###开启RPC服务
