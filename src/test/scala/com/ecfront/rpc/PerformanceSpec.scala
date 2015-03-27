@@ -2,7 +2,7 @@ package com.ecfront.rpc
 
 import java.util.concurrent.CountDownLatch
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import org.scalatest.FunSuite
 
 class PerformanceSpec extends FunSuite {
@@ -19,7 +19,7 @@ class PerformanceSpec extends FunSuite {
     server.startup()
       .put[TestModel]("/index/:id/", classOf[TestModel], {
       (param, body) =>
-        Result.success(body)
+        Resp.success(body)
     })
 
     val client = RPC.client.setPort(808)

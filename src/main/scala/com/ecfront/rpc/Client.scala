@@ -1,6 +1,6 @@
 package com.ecfront.rpc
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import com.ecfront.rpc.akka.client.AkkaClientProcessor
 import com.ecfront.rpc.http.client.HttpClientProcessor
 import com.ecfront.rpc.process.ClientProcessor
@@ -66,7 +66,7 @@ class Client extends LazyLogging {
    * @param fun 业务方法
    * @return Result包装对象
    */
-  def get[E](path: String, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
+  def get[E](path: String, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
     processor.process[E]("GET", path, null, responseClass, fun)
     this
   }
@@ -77,7 +77,7 @@ class Client extends LazyLogging {
    * @param responseClass 返回对象的类型
    * @return Result包装对象
    */
-  def getSync[E](path: String, responseClass: Class[E] = null): Option[Result[E]] = {
+  def getSync[E](path: String, responseClass: Class[E] = null): Option[Resp[E]] = {
     Await.result(processor.process[E]("GET", path, null, responseClass), Duration.Inf)
   }
 
@@ -88,7 +88,7 @@ class Client extends LazyLogging {
    * @param fun 业务方法
    * @return Result包装对象
    */
-  def delete[E](path: String, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
+  def delete[E](path: String, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
     processor.process[E]("DELETE", path, null, responseClass, fun)
     this
   }
@@ -99,7 +99,7 @@ class Client extends LazyLogging {
    * @param responseClass 返回对象的类型
    * @return Result包装对象
    */
-  def deleteSync[E](path: String, responseClass: Class[E] = null): Option[Result[E]] = {
+  def deleteSync[E](path: String, responseClass: Class[E] = null): Option[Resp[E]] = {
     Await.result(processor.process[E]("DELETE", path, null, responseClass), Duration.Inf)
   }
 
@@ -111,7 +111,7 @@ class Client extends LazyLogging {
    * @param fun 业务方法
    * @return Result包装对象
    */
-  def post[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
+  def post[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
     processor.process[E]("POST", path, data, responseClass, fun)
     this
   }
@@ -123,7 +123,7 @@ class Client extends LazyLogging {
    * @param responseClass 返回对象的类型
    * @return Result包装对象
    */
-  def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Result[E]] = {
+  def postSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Resp[E]] = {
     Await.result(processor.process[E]("POST", path, data, responseClass), Duration.Inf)
   }
 
@@ -135,7 +135,7 @@ class Client extends LazyLogging {
    * @param fun 业务方法
    * @return Result包装对象
    */
-  def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Result[E] => Unit = null) = {
+  def put[E](path: String, data: Any, responseClass: Class[E] = null, fun: => Resp[E] => Unit = null) = {
     processor.process[E]("PUT", path, data, responseClass, fun)
     this
   }
@@ -147,7 +147,7 @@ class Client extends LazyLogging {
    * @param responseClass 返回对象的类型
    * @return Result包装对象
    */
-  def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Result[E]] = {
+  def putSync[E](path: String, data: Any, responseClass: Class[E] = null): Option[Resp[E]] = {
     Await.result(processor.process[E]("PUT", path, data, responseClass), Duration.Inf)
   }
 

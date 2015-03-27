@@ -1,6 +1,6 @@
 package com.ecfront.rpc.process
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ trait ClientProcessor extends LazyLogging {
    * @param fun 业务方法
    * @return Result包装对象
    */
-  protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => Result[E] => Unit): Unit
+  protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => Resp[E] => Unit): Unit
 
   /**
    * 处理Result包装返回类型（同步方式）
@@ -43,7 +43,7 @@ trait ClientProcessor extends LazyLogging {
    * @param responseClass 返回对象的类型
    * @return Result包装对象
    */
-  protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Result[E]]]
+  protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Resp[E]]]
 
   /**
    * 处理原生返回类型（异步方式）

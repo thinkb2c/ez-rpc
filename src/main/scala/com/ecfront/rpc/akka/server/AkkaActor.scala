@@ -1,7 +1,7 @@
 package com.ecfront.rpc.akka.server
 
 import akka.actor.{Actor, Props}
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import com.ecfront.rpc.Router
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
@@ -20,8 +20,7 @@ class AkkaActor(router: Router) extends Actor with LazyLogging {
         }
         sender() ! fun.execute(urlParameter.toMap, body)
       } else {
-        logger.warn("Not implemented: [ %s ] %s".format(method, path))
-        sender() ! Result.notImplemented("[ %s ] %s".format(method, path))
+        sender() ! Resp.notImplemented("[ %s ] %s".format(method, path))
       }
   }
 

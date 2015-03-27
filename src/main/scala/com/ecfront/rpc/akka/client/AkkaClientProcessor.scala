@@ -3,7 +3,7 @@ package com.ecfront.rpc.akka.client
 import akka.actor.{ActorSelection, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import com.ecfront.rpc.akka.server.AkkaRequest
 import com.ecfront.rpc.process.ClientProcessor
 import com.typesafe.config.ConfigFactory
@@ -64,25 +64,25 @@ class AkkaClientProcessor extends ClientProcessor {
     p.future
   }
 
-  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Result[E]) => Unit = null): Unit = {
+  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Resp[E]) => Unit = null): Unit = {
     val parameter: Map[String, String] = getParameter(path)
     if (fun == null) {
       actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
     } else {
       val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
-      fun(Await.result(future, Duration.Inf).asInstanceOf[Result[E]])
+      fun(Await.result(future, Duration.Inf).asInstanceOf[Resp[E]])
     }
   }
 
-  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Result[E]]] = {
-    val p = Promise[Option[Result[E]]]()
+  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Resp[E]]] = {
+    val p = Promise[Option[Resp[E]]]()
     val parameter: Map[String, String] = getParameter(path)
     if (responseClass == null) {
       actor ! AkkaRequest(method, removeParameter(path), parameter, requestBody)
       p.success(null)
     } else {
       val future = actor ? AkkaRequest(method, removeParameter(path), parameter, requestBody)
-      p.success(Some(Await.result(future, Duration.Inf).asInstanceOf[Result[E]]))
+      p.success(Some(Await.result(future, Duration.Inf).asInstanceOf[Resp[E]]))
     }
     p.future
   }

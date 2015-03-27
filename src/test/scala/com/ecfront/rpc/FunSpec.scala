@@ -2,7 +2,7 @@ package com.ecfront.rpc
 
 import java.util.concurrent.CountDownLatch
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import org.scalatest.FunSuite
 
 class FunSpec extends FunSuite {
@@ -21,22 +21,22 @@ class FunSpec extends FunSuite {
     server.startup()
       .get("/number/", {
       (param, _) =>
-        Result.success(1L)
+        Resp.success(1L)
     }).get("/boolean/", {
       (param, _) =>
-        Result.success(true)
+        Resp.success(true)
     }).get("/index/", {
       (param, _) =>
         assert(param("a") == "1")
-        Result.success("完成")
+        Resp.success("完成")
     }).post[String]("/index/", classOf[String], {
       (param, body) =>
-        Result.success(body)
+        Resp.success(body)
     }).put[TestModel]("/index/:id/", classOf[TestModel], {
       (param, body) =>
         assert(body.name == "测试")
         assert(param.get("id").get == "test")
-        Result.success(body)
+        Resp.success(body)
     }).put[TestModel]("/custom/:id/", classOf[TestModel], {
       (param, body) =>
         assert(body.name == "测试")

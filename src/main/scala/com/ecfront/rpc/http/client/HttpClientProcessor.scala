@@ -2,9 +2,7 @@ package com.ecfront.rpc.http.client
 
 import java.net.URL
 
-import com.ecfront.common.JsonHelper
-import com.ecfront.rpc.RPC.Result
-import com.ecfront.rpc.RPC.Result.Code
+import com.ecfront.common.{JsonHelper, Resp, StandardCode}
 import com.ecfront.rpc.process.ClientProcessor
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpClientOptions, HttpClientResponse, HttpMethod}
@@ -44,7 +42,7 @@ class HttpClientProcessor extends ClientProcessor {
     client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (fun != null) {
-          if (response.statusCode + "" != Code.SUCCESS) {
+          if (response.statusCode + "" != StandardCode.SUCCESS) {
             logger.error("Server NOT responded.")
           } else {
             response.bodyHandler(new Handler[Buffer] {
@@ -71,7 +69,7 @@ class HttpClientProcessor extends ClientProcessor {
     client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (responseClass != null) {
-          if (response.statusCode + "" != Code.SUCCESS) {
+          if (response.statusCode + "" != StandardCode.SUCCESS) {
             logger.error("Server NOT responded.")
             p.failure(new Exception(response.statusMessage()))
           } else {
@@ -94,23 +92,23 @@ class HttpClientProcessor extends ClientProcessor {
     p.future
   }
 
-  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Result[E]) => Unit): Unit = {
+  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E], fun: => (Resp[E]) => Unit): Unit = {
     val body: String = getBody(requestBody, "json")
     val (tHost, tPort, tPath) = getUrlInfo(path)
     client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (fun != null) {
-          if (response.statusCode + "" != Code.SUCCESS) {
-            fun(Result.serverUnavailable[E]("Server NOT responded."))
+          if (response.statusCode + "" != StandardCode.SUCCESS) {
+            fun(Resp.serverUnavailable[E]("Server NOT responded."))
           } else {
             response.bodyHandler(new Handler[Buffer] {
               override def handle(data: Buffer): Unit = {
                 val json = JsonHelper.toJson(data.getString(0, data.length))
-                val code = json.get(Result.CODE).asText()
-                if (code == Code.SUCCESS) {
-                  fun(Result.success(JsonHelper.toObject(json.get(Result.BODY), responseClass)))
+                val code = json.get(Resp.CODE).asText()
+                if (code == StandardCode.SUCCESS) {
+                  fun(Resp.success(JsonHelper.toObject(json.get(Resp.BODY), responseClass)))
                 } else {
-                  fun(Result.customFail(code, json.get(Result.MESSAGE).asText()))
+                  fun(Resp.fail(code, json.get(Resp.MESSAGE).asText()))
                 }
               }
             })
@@ -120,24 +118,24 @@ class HttpClientProcessor extends ClientProcessor {
     }).putHeader("content-type", "application/json; charset=UTF-8").end(body)
   }
 
-  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Result[E]]] = {
+  override protected[rpc] def process[E](method: String, path: String, requestBody: Any, responseClass: Class[E]): Future[Option[Resp[E]]] = {
     val body: String = getBody(requestBody, "json")
-    val p = Promise[Option[Result[E]]]()
+    val p = Promise[Option[Resp[E]]]()
     val (tHost, tPort, tPath) = getUrlInfo(path)
     client.request(HttpMethod.valueOf(method), tPort, tHost, tPath, new Handler[HttpClientResponse] {
       override def handle(response: HttpClientResponse): Unit = {
         if (responseClass != null) {
-          if (response.statusCode + "" != Code.SUCCESS) {
-            p.success(Some(Result.serverUnavailable[E]("Server NOT responded.")))
+          if (response.statusCode + "" != StandardCode.SUCCESS) {
+            p.success(Some(Resp.serverUnavailable[E]("Server NOT responded.")))
           } else {
             response.bodyHandler(new Handler[Buffer] {
               override def handle(data: Buffer): Unit = {
                 val json = JsonHelper.toJson(data.getString(0, data.length))
-                val code = json.get(Result.CODE).asText()
-                if (code == Code.SUCCESS) {
-                  p.success(Some(Result.success(JsonHelper.toObject(json.get(Result.BODY), responseClass))))
+                val code = json.get(Resp.CODE).asText()
+                if (code == StandardCode.SUCCESS) {
+                  p.success(Some(Resp.success(JsonHelper.toObject(json.get(Resp.BODY), responseClass))))
                 } else {
-                  p.success(Some(Result.customFail(code, json.get(Result.MESSAGE).asText())))
+                  p.success(Some(Resp.fail(code, json.get(Resp.MESSAGE).asText())))
                 }
               }
             })

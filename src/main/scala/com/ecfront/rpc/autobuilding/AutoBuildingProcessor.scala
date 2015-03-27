@@ -1,7 +1,6 @@
 package com.ecfront.rpc.autobuilding
 
-import com.ecfront.common.{BeanHelper, methodAnnotationInfo}
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.{BeanHelper, Resp, methodAnnotationInfo}
 import com.ecfront.rpc.Server
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
@@ -21,8 +20,7 @@ object AutoBuildingProcessor extends LazyLogging {
                   }
                 } catch {
                   case e: Exception =>
-                    logger.error("Occurred unchecked exception.", e)
-                    Result.serverError("Occurred unchecked exception.")
+                    Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: post if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
@@ -34,8 +32,7 @@ object AutoBuildingProcessor extends LazyLogging {
                   }
                 } catch {
                   case e: Exception =>
-                    logger.error("Occurred unchecked exception.", e)
-                    Result.serverError("Occurred unchecked exception.")
+                    Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: put if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
@@ -47,8 +44,7 @@ object AutoBuildingProcessor extends LazyLogging {
                   }
                 } catch {
                   case e: Exception =>
-                    logger.error("Occurred unchecked exception.", e)
-                    Result.serverError("Occurred unchecked exception.")
+                    Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case ann: delete if server.isHighPerformance && ann.akka || !server.isHighPerformance && ann.http =>
@@ -60,8 +56,7 @@ object AutoBuildingProcessor extends LazyLogging {
                   }
                 } catch {
                   case e: Exception =>
-                    logger.error("Occurred unchecked exception.", e)
-                    Result.serverError("Occurred unchecked exception.")
+                    Resp.serverError("Occurred unchecked exception.")
                 }
             })
           case _ =>

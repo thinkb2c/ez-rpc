@@ -2,7 +2,7 @@ package com.ecfront.rpc
 
 import java.util.concurrent.CountDownLatch
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import org.scalatest.FunSuite
 
 class MultiSpec extends FunSuite {
@@ -10,23 +10,23 @@ class MultiSpec extends FunSuite {
   test("多服务测试") {
     RPC.server.setPort(8001).startup().get("/test/", {
       (param, _) =>
-        Result.success("OK1")
+        Resp.success("OK1")
     })
     RPC.server.setPort(8002).startup().get("/test/", {
       (param, _) =>
-        Result.success("OK2")
+        Resp.success("OK2")
     })
     RPC.server.useHighPerformance().setPort(8003).startup().get("/test/", {
       (param, _) =>
-        Result.success("OK3")
+        Resp.success("OK3")
     })
     RPC.server.useHighPerformance().setPort(8004).startup().get("/test/", {
       (param, _) =>
-        Result.success("OK4")
+        Resp.success("OK4")
     })
     RPC.server.useHighPerformance().setPort(8005).startup().get("/test/", {
       (param, _) =>
-        Result.success("OK5")
+        Resp.success("OK5")
     })
     val latch = new CountDownLatch(6)
 

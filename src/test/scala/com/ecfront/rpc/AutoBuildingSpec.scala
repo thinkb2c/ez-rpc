@@ -1,6 +1,6 @@
 package com.ecfront.rpc
 
-import com.ecfront.rpc.RPC.Result
+import com.ecfront.common.Resp
 import com.ecfront.rpc.autobuilding._
 import org.scalatest.FunSuite
 
@@ -33,54 +33,54 @@ class AutoBuildingSpec extends FunSuite {
 object AService {
 
   @post(uri = "/test/", http = true, akka = true)
-  def postTest(parameter: Map[String, String], req: TestModel): Result[String] = {
+  def postTest(parameter: Map[String, String], req: TestModel): Resp[String] = {
     assert(req.name == "测试")
-    Result.success("OK")
+    Resp.success("OK")
   }
 
   @put(uri = "/test/:id/", http = true, akka = true)
-  def putTest(parameter: Map[String, String], req: TestModel): Result[String] = {
+  def putTest(parameter: Map[String, String], req: TestModel): Resp[String] = {
     assert(parameter("id") == "1")
-    Result.success("OK")
+    Resp.success("OK")
   }
 
   @get(uri = "/test/:id/", http = true, akka = true)
-  def getTest(parameter: Map[String, String]): Result[TestModel] = {
+  def getTest(parameter: Map[String, String]): Resp[TestModel] = {
     assert(parameter("id") == "1")
-    Result.success(TestModel("测试"))
+    Resp.success(TestModel("测试"))
   }
 
   @delete(uri = "/test/:id/", http = true, akka = true)
-  def deleteTest(parameter: Map[String, String]): Result[String] = {
+  def deleteTest(parameter: Map[String, String]): Resp[String] = {
     assert(parameter("id") == "1")
-    Result.success("OK")
+    Resp.success("OK")
   }
 }
 
 case class BService() {
 
   @post(uri = "/test/", http = true, akka = true)
-  def postTest(parameter: Map[String, String], req: TestModel): Result[String] = {
+  def postTest(parameter: Map[String, String], req: TestModel): Resp[String] = {
     assert(req.name == "测试")
-    Result.success("OK")
+    Resp.success("OK")
   }
 
   @put(uri = "/test/:id/", http = true, akka = true)
-  def putTest(parameter: Map[String, String], req: TestModel): Result[String] = {
+  def putTest(parameter: Map[String, String], req: TestModel): Resp[String] = {
     assert(parameter("id") == "1")
-    Result.success("OK")
+    Resp.success("OK")
   }
 
   @get(uri = "/test/:id/", http = true, akka = true)
-  def getTest(parameter: Map[String, String]): Result[TestModel] = {
+  def getTest(parameter: Map[String, String]): Resp[TestModel] = {
     assert(parameter("id") == "1")
-    Result.success(TestModel("测试"))
+    Resp.success(TestModel("测试"))
   }
 
   @delete(uri = "/test/:id/", http = true, akka = true)
-  def deleteTest(parameter: Map[String, String]): Result[String] = {
+  def deleteTest(parameter: Map[String, String]): Resp[String] = {
     assert(parameter("id") == "1")
-    Result.success("OK")
+    Resp.success("OK")
   }
 }
 

@@ -2,9 +2,8 @@ package com.ecfront.rpc.http.server
 
 import java.util.concurrent.CountDownLatch
 
-import com.ecfront.common.JsonHelper
+import com.ecfront.common.{JsonHelper, Resp}
 import com.ecfront.rpc.Fun
-import com.ecfront.rpc.RPC.Result
 import com.ecfront.rpc.process.ServerProcessor
 import io.vertx.core._
 import io.vertx.core.buffer.Buffer
@@ -50,7 +49,7 @@ class HttpServerProcessor extends ServerProcessor {
             }
           } else {
             logger.warn("Not implemented: [ %s ] %s".format(request.method().name(), request.path()))
-            returnContent(Result.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
+            returnContent(Resp.badRequest("[ %s ] %s".format(request.method().name(), request.path())), request.response(), contentType)
           }
         }
       }
